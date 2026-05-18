@@ -76,6 +76,15 @@
       {% endif %}
     </article>
 
+    <!-- Конспект студента -->
+    <div class="notes-block">
+      <div class="notes-header">
+        <span><i class="fas fa-pen-alt"></i> Мой конспект</span>
+        <span class="notes-saved" id="notesSaved" style="display:none"><i class="fas fa-check-circle"></i> Сохранено <span id="notesSavedTime"></span></span>
+      </div>
+      <textarea id="notesArea" class="notes-area" placeholder="Пиши сюда свои заметки по этому уроку — они сохранятся автоматически…">{{ user_notes }}</textarea>
+    </div>
+
     <!-- Навигация между уроками -->
     <div class="lesson-navigation">
       {% if prev_lesson %}
@@ -292,5 +301,46 @@ function closeSidebar() {
 .sp-fill{height:100%;background:linear-gradient(90deg,#667eea,#764ba2);border-radius:3px;transition:width .3s}
 .sp-text{font-size:.75rem;color:#6b7280}
 .lesson-done-mark{color:#10b981;font-size:.75rem;margin-left:.25rem}
+/* Notes */
+.notes-block{margin:2rem 0 1.5rem;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden}
+.notes-header{background:#f9fafb;padding:.6rem 1rem;display:flex;justify-content:space-between;align-items:center;font-size:.85rem;font-weight:500;color:#374151;border-bottom:1px solid #e5e7eb}
+.notes-saved{color:#059669;font-size:.78rem;display:flex;align-items:center;gap:.35rem}
+.notes-area{width:100%;min-height:120px;border:none;padding:.85rem 1rem;font-size:.9rem;line-height:1.6;resize:vertical;font-family:inherit;color:#374151;background:#fff;outline:none;box-sizing:border-box}
+body.dark-mode .notes-block{border-color:#334155}
+body.dark-mode .notes-header{background:#1e293b;color:#e2e8f0;border-color:#334155}
+body.dark-mode .notes-area{background:#0f172a;color:#e2e8f0}
 </style>
+
+<script>
+// ── Автосохранение конспекта ─────────────────────────────────────────────────
+(function(){
+  const area = document.getElementById('notesArea');
+  const saved = document.getElementById('notesSaved');
+  const savedTime = document.getElementById('notesSavedTime');
+  if (!area) return;
+  let saveTimer = null;
+
+  function saveNotes() {
+    fetch('{% url "save_notes" lesson.id %}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({notes: area.value})
+    }).then(r => r.json()).then(data => {
+      if (data.status === 'ok') {
+        savedTime.textContent = data.saved_at;
+        saved.style.display = 'flex';
+        setTimeout(() => { saved.style.display = 'none'; }, 3000);
+      }
+    }).catch(() => {});
+  }
+
+  area.addEventListener('input', function() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveNotes, 1200);
+  });
+})();
+</script>
 {% endblock %}

@@ -12,6 +12,37 @@
 {% if user.is_authenticated %}
 <!-- Дашборд студента -->
 <div class="page">
+
+  <!-- Объявления -->
+  {% if announcements %}
+  <div class="announcements-block" id="announcementsBlock">
+    {% for ann in announcements %}
+    <div class="ann-card" id="ann-{{ ann.id }}">
+      <div class="ann-icon"><i class="fas fa-bullhorn"></i></div>
+      <div class="ann-body">
+        <div class="ann-title">{{ ann.title }}
+          {% if ann.subject %}<span class="ann-subj-badge" style="background:{{ ann.subject.color }}20;color:{{ ann.subject.color }}">{{ ann.subject.title }}</span>{% endif %}
+        </div>
+        {% if ann.body %}<div class="ann-text">{{ ann.body }}</div>{% endif %}
+        <div class="ann-meta">{{ ann.author.last_name }} · {{ ann.created_at|date:"d.m.Y H:i" }}</div>
+      </div>
+      {% if user.is_staff %}
+      <button class="ann-close" onclick="dismissAnn({{ ann.id }})" title="Скрыть"><i class="fas fa-times"></i></button>
+      {% endif %}
+    </div>
+    {% endfor %}
+    {% if user.is_staff %}
+    <div style="text-align:right;margin-top:.5rem">
+      <a href="{% url 'create_announcement' %}" class="ann-create-btn"><i class="fas fa-plus"></i> Добавить объявление</a>
+    </div>
+    {% endif %}
+  </div>
+  {% elif user.is_staff %}
+  <div style="text-align:right;margin-bottom:.75rem">
+    <a href="{% url 'create_announcement' %}" class="ann-create-btn"><i class="fas fa-plus"></i> Добавить объявление</a>
+  </div>
+  {% endif %}
+
   <div class="page-header">
     <div>
       <h1>Добро пожаловать, {{ user.first_name|default:user.username }}! 👋</h1>
@@ -158,4 +189,31 @@
   </div>
 </div>
 {% endif %}
+
+<style>
+.announcements-block{margin-bottom:1.25rem}
+.ann-card{background:#fff;border:1px solid #e5e7eb;border-left:4px solid #667eea;border-radius:8px;padding:.85rem 1rem;display:flex;align-items:flex-start;gap:.85rem;margin-bottom:.5rem;position:relative}
+.ann-icon{color:#667eea;font-size:1rem;margin-top:.1rem;flex-shrink:0}
+.ann-body{flex:1;min-width:0}
+.ann-title{font-weight:600;font-size:.95rem;margin-bottom:.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.ann-text{font-size:.88rem;color:#4b5563;line-height:1.5;margin-bottom:.25rem}
+.ann-meta{font-size:.75rem;color:#9ca3af}
+.ann-subj-badge{font-size:.72rem;padding:.1rem .5rem;border-radius:20px;font-weight:500}
+.ann-close{position:absolute;top:.6rem;right:.6rem;background:none;border:none;color:#9ca3af;cursor:pointer;font-size:.85rem;padding:.2rem .4rem;border-radius:4px}
+.ann-close:hover{background:#f3f4f6;color:#374151}
+.ann-create-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .9rem;border-radius:8px;background:#667eea;color:#fff;text-decoration:none;font-size:.83rem;font-weight:500}
+body.dark-mode .ann-card{background:#1e293b;border-color:#334155;border-left-color:#667eea}
+body.dark-mode .ann-text{color:#94a3b8}
+</style>
+<script>
+function dismissAnn(id) {
+  fetch(`/announcements/${id}/deactivate/`, {
+    method: 'POST',
+    headers: {'X-CSRFToken': '{{ csrf_token }}'}
+  }).then(() => {
+    const el = document.getElementById('ann-' + id);
+    if (el) el.style.display = 'none';
+  });
+}
+</script>
 {% endblock %}

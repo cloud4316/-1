@@ -31,6 +31,14 @@ urlpatterns = [
     path('theory/', views.theory_list, name='theory_list'),
     path('theory/lesson/<int:lesson_id>/', views.theory_lesson, name='theory_lesson'),
     path('theory/lesson/<int:lesson_id>/done/', views.mark_lesson_done, name='mark_lesson_done'),
+    path('theory/lesson/<int:lesson_id>/notes/', views.save_notes, name='save_notes'),
+
+    # ── Предметы ──────────────────────────────────────────────────────────────
+    path('subject/<slug:slug>/', views.switch_subject, name='switch_subject'),
+
+    # ── Объявления ────────────────────────────────────────────────────────────
+    path('announcements/create/', views.create_announcement, name='create_announcement'),
+    path('announcements/<int:pk>/deactivate/', views.deactivate_announcement, name='deactivate_announcement'),
 
     # ── Тесты ─────────────────────────────────────────────────────────────────
     path('quiz/', views.quiz_list, name='quiz_list'),

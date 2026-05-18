@@ -18,7 +18,7 @@ from .models import (PracticalWork, Solution, UserProgress, UserSession, PageVie
                      Quiz, Question, AnswerChoice, QuizAttempt,
                      Notification, TeacherComment,
                      Achievement, UserAchievement, WorkHint, UserHintUnlock,
-                     DeadlineExtension)
+                     DeadlineExtension, Subject, Announcement)
 from .code_runner import run_python_code, run_java_code, run_cpp_code, run_javascript_code
 from .ai_checker import AICodeChecker
 from .forms import SolutionForm, RegistrationForm, FullNameLoginForm, generate_username
@@ -109,33 +109,53 @@ def check_achievements(user):
         pass  # Не ломаем основной поток
 
 
+def _active_announcements(request):
+    """Вернуть активные объявления для текущего предмета + общие."""
+    now = timezone.now()
+    subject_slug = request.session.get('subject_slug', 'python')
+    return Announcement.objects.filter(
+        is_active=True
+    ).filter(
+        Q(expires_at__isnull=True) | Q(expires_at__gt=now)
+    ).filter(
+        Q(subject__isnull=True) | Q(subject__slug=subject_slug)
+    ).select_related('author', 'subject').order_by('-created_at')[:5]
+
+
 def home(request):  # Публичная страница — @login_required не нужен
-	if request.user.is_authenticated:
-		progress, created = UserProgress.objects.get_or_create(user=request.user)
-		total_works = PracticalWork.objects.filter(is_active=True).count()
-		completed_works = Solution.objects.filter(
-			student=request.user,
-			status__in=['correct', 'partially_correct']
-		).values('work').distinct().count()
-		total_score = Solution.objects.filter(student=request.user).aggregate(Sum('score'))['score__sum'] or 0
-		progress.total_works = total_works
-		progress.completed_works = completed_works
-		progress.total_score = total_score
-		progress.average_score = total_score / completed_works if completed_works > 0 else 0
-		progress.save()
-		recent_solutions = Solution.objects.filter(student=request.user).order_by('-submitted_at')[:3]
-		context = {
-			'progress': progress,
-			'recent_solutions': recent_solutions,
-			'total_works': total_works,
-			'completed_works': completed_works,
-			'highlight_works': PracticalWork.objects.filter(is_active=True).order_by('order')[:3],
-		}
-	else:
-		context = {
-			'highlight_works': PracticalWork.objects.filter(is_active=True).order_by('order')[:3],
-		}
-	return render(request, 'works/home.html', context)
+    subjects = Subject.objects.filter(is_active=True)
+    announcements = _active_announcements(request) if request.user.is_authenticated else []
+
+    if request.user.is_authenticated:
+        progress, created = UserProgress.objects.get_or_create(user=request.user)
+        total_works = PracticalWork.objects.filter(is_active=True).count()
+        completed_works = Solution.objects.filter(
+            student=request.user,
+            status__in=['correct', 'partially_correct']
+        ).values('work').distinct().count()
+        total_score = Solution.objects.filter(student=request.user).aggregate(Sum('score'))['score__sum'] or 0
+        progress.total_works = total_works
+        progress.completed_works = completed_works
+        progress.total_score = total_score
+        progress.average_score = total_score / completed_works if completed_works > 0 else 0
+        progress.save()
+        recent_solutions = Solution.objects.filter(student=request.user).order_by('-submitted_at')[:3]
+        context = {
+            'progress': progress,
+            'recent_solutions': recent_solutions,
+            'total_works': total_works,
+            'completed_works': completed_works,
+            'highlight_works': PracticalWork.objects.filter(is_active=True).order_by('order')[:3],
+            'subjects': subjects,
+            'announcements': announcements,
+            'current_subject_slug': request.session.get('subject_slug', 'python'),
+        }
+    else:
+        context = {
+            'highlight_works': PracticalWork.objects.filter(is_active=True).order_by('order')[:3],
+            'subjects': subjects,
+        }
+    return render(request, 'works/home.html', context)
 
 
 def register(request):
@@ -768,7 +788,16 @@ def solution_detail(request, solution_id):
 
 @login_required
 def theory_list(request):
-    modules = list(TheoryModule.objects.filter(is_active=True).prefetch_related('lessons', 'quizzes'))
+    subject_slug = request.session.get('subject_slug', 'python')
+    try:
+        current_subject = Subject.objects.get(slug=subject_slug)
+    except Subject.DoesNotExist:
+        current_subject = None
+
+    qs = TheoryModule.objects.filter(is_active=True).prefetch_related('lessons', 'quizzes')
+    if current_subject:
+        qs = qs.filter(subject=current_subject)
+    modules = list(qs)
 
     completed_lesson_ids = set(
         LessonProgress.objects.filter(user=request.user, completed=True)
@@ -786,7 +815,11 @@ def theory_list(request):
         module.is_completed   = (total > 0 and done == total)
         module.unlock         = unlock_status.get(module.id, {'theory': True, 'quiz': True, 'locked': False})
 
-    return render(request, 'works/theory_list.html', {'modules': modules})
+    return render(request, 'works/theory_list.html', {
+        'modules': modules,
+        'current_subject': current_subject,
+        'subjects': Subject.objects.filter(is_active=True),
+    })
 
 
 @login_required
@@ -800,10 +833,10 @@ def theory_lesson(request, lesson_id):
     prev_lesson = all_lessons[current_index - 1] if current_index > 0 else None
     next_lesson = all_lessons[current_index + 1] if current_index < len(all_lessons) - 1 else None
 
-    # Отметка о прочтении
-    is_completed = LessonProgress.objects.filter(
-        user=request.user, lesson=lesson, completed=True
-    ).exists()
+    # Отметка о прочтении + конспект
+    progress_obj = LessonProgress.objects.filter(user=request.user, lesson=lesson).first()
+    is_completed = bool(progress_obj and progress_obj.completed)
+    user_notes   = progress_obj.notes if progress_obj else ''
 
     # Тесты для этого модуля
     module_quizzes = module.quizzes.filter(is_active=True)
@@ -828,6 +861,7 @@ def theory_lesson(request, lesson_id):
         'done_count': done_count,
         'total_count': total_count,
         'progress_pct': progress_pct,
+        'user_notes': user_notes,
     })
 
 
@@ -844,6 +878,75 @@ def mark_lesson_done(request, lesson_id):
         obj.save()
     check_achievements(request.user)
     return JsonResponse({'status': 'ok', 'lesson_id': lesson_id})
+
+
+# ── Конспекты ────────────────────────────────────────────────────────────────
+
+@login_required
+@require_http_methods(["POST"])
+def save_notes(request, lesson_id):
+    lesson = get_object_or_404(TheoryLesson, id=lesson_id)
+    try:
+        data = json.loads(request.body)
+        notes_text = data.get('notes', '')
+    except (json.JSONDecodeError, AttributeError):
+        return JsonResponse({'status': 'error', 'message': 'bad json'}, status=400)
+
+    obj, _ = LessonProgress.objects.get_or_create(
+        user=request.user, lesson=lesson,
+        defaults={'completed': False}
+    )
+    obj.notes = notes_text
+    obj.save(update_fields=['notes', 'updated_at'])
+    return JsonResponse({'status': 'ok', 'saved_at': obj.updated_at.strftime('%H:%M:%S')})
+
+
+# ── Переключение предмета ─────────────────────────────────────────────────────
+
+def switch_subject(request, slug):
+    subject = get_object_or_404(Subject, slug=slug, is_active=True)
+    request.session['subject_slug'] = subject.slug
+    next_url = request.GET.get('next') or request.META.get('HTTP_REFERER', '/')
+    return redirect(next_url)
+
+
+# ── Объявления ────────────────────────────────────────────────────────────────
+
+@login_required
+def create_announcement(request):
+    if not request.user.is_staff:
+        return redirect('home')
+    if request.method == 'POST':
+        title      = request.POST.get('title', '').strip()
+        body       = request.POST.get('body', '').strip()
+        subject_id = request.POST.get('subject_id') or None
+        expires    = request.POST.get('expires_at') or None
+        if title:
+            subj = Subject.objects.filter(id=subject_id).first() if subject_id else None
+            exp  = None
+            if expires:
+                from django.utils.dateparse import parse_datetime
+                exp = parse_datetime(expires)
+            Announcement.objects.create(
+                author=request.user, subject=subj,
+                title=title, body=body,
+                expires_at=exp,
+            )
+            messages.success(request, 'Объявление опубликовано.')
+        return redirect(request.POST.get('next', 'home'))
+    subjects = Subject.objects.filter(is_active=True)
+    return render(request, 'works/announcement_form.html', {'subjects': subjects})
+
+
+@login_required
+@require_http_methods(["POST"])
+def deactivate_announcement(request, pk):
+    if not request.user.is_staff:
+        return JsonResponse({'status': 'forbidden'}, status=403)
+    ann = get_object_or_404(Announcement, pk=pk)
+    ann.is_active = False
+    ann.save(update_fields=['is_active'])
+    return JsonResponse({'status': 'ok'})
 
 
 # ══════════════════════════════════════════════════════════════════════════════

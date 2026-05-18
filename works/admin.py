@@ -3,6 +3,7 @@ from django.db.models import Count, Avg
 from django.utils.html import format_html
 from django.utils import timezone
 from .models import (
+    Subject, Announcement,
     PracticalWork, Solution, UserProgress, UserSession, PageView, CodeCheck,
     TheoryModule, TheoryLesson, LessonProgress,
     Quiz, Question, AnswerChoice, QuizAttempt,
@@ -19,6 +20,28 @@ admin.site.index_title = "Панель управления"
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# ПРЕДМЕТЫ И ОБЪЯВЛЕНИЯ
+# ══════════════════════════════════════════════════════════════════════════════
+
+@admin.register(Subject)
+class SubjectAdmin(admin.ModelAdmin):
+    list_display       = ('order', 'title', 'slug', 'icon', 'color', 'is_active')
+    list_display_links = ('title',)
+    list_editable      = ('order', 'is_active')
+    prepopulated_fields = {'slug': ('title',)}
+
+
+@admin.register(Announcement)
+class AnnouncementAdmin(admin.ModelAdmin):
+    list_display    = ('title', 'author', 'subject', 'is_active', 'created_at', 'expires_at')
+    list_filter     = ('is_active', 'subject')
+    search_fields   = ('title', 'body', 'author__last_name')
+    date_hierarchy  = 'created_at'
+    readonly_fields = ('created_at',)
+    list_editable   = ('is_active',)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # ПРАКТИЧЕСКИЕ РАБОТЫ
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -30,10 +53,10 @@ class WorkHintInline(admin.TabularInline):
 
 @admin.register(PracticalWork)
 class PracticalWorkAdmin(admin.ModelAdmin):
-    list_display  = ('order', 'title', 'topic', 'difficulty', 'language',
+    list_display  = ('order', 'title', 'subject', 'topic', 'difficulty', 'language',
                      'is_active', 'max_score', 'solutions_count')
     list_display_links = ('title',)
-    list_filter   = ('topic', 'difficulty', 'language', 'is_active')
+    list_filter   = ('subject', 'topic', 'difficulty', 'language', 'is_active')
     search_fields = ('title', 'description')
     ordering      = ('order',)
     list_editable = ('is_active', 'order')
@@ -167,11 +190,11 @@ class TheoryLessonInline(admin.TabularInline):
 
 @admin.register(TheoryModule)
 class TheoryModuleAdmin(admin.ModelAdmin):
-    list_display       = ('order', 'title', 'icon', 'lessons_count',
+    list_display       = ('order', 'title', 'subject', 'icon', 'lessons_count',
                           'is_active', 'requires_quiz_pass')
     list_display_links = ('title',)
     list_editable      = ('order', 'is_active')
-    list_filter        = ('is_active', 'requires_quiz_pass')
+    list_filter        = ('subject', 'is_active', 'requires_quiz_pass')
     search_fields      = ('title', 'description')
     inlines            = [TheoryLessonInline]
 
