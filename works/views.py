@@ -328,7 +328,13 @@ def work_list(request):
 		request.GET.get('topic') and request.GET.get('topic') != 'all',
 		request.GET.get('sort') and request.GET.get('sort') != 'order'
 	])
-	qs = PracticalWork.objects.filter(is_active=True).select_related().prefetch_related('solution_set')
+	subject_slug = request.session.get('subject_slug', 'python')
+	qs = PracticalWork.objects.filter(is_active=True).select_related('subject').prefetch_related('solution_set')
+	try:
+		current_subject = Subject.objects.get(slug=subject_slug)
+		qs = qs.filter(subject=current_subject)
+	except Subject.DoesNotExist:
+		current_subject = None
 	q = request.GET.get('q')
 	if q:
 		qs = qs.filter(Q(title__icontains=q) | Q(description__icontains=q))
@@ -419,6 +425,7 @@ def work_list(request):
 		'items_per_page': items_per_page,
 		'is_mobile': is_mobile,
 		'is_tablet': is_tablet,
+		'current_subject': current_subject,
 	}
 	if is_ajax:
 		ajax_context = {
@@ -949,13 +956,45 @@ def deactivate_announcement(request, pk):
     return JsonResponse({'status': 'ok'})
 
 
+@login_required
+def announcement_list(request):
+    if not request.user.is_staff:
+        return redirect('home')
+    qs = Announcement.objects.select_related('author', 'subject').order_by('-created_at')
+    subject_filter = request.GET.get('subject')
+    if subject_filter:
+        qs = qs.filter(subject__slug=subject_filter)
+    active_filter = request.GET.get('active')
+    if active_filter == '1':
+        qs = qs.filter(is_active=True)
+    elif active_filter == '0':
+        qs = qs.filter(is_active=False)
+    announcements = list(qs[:50])
+    now = timezone.now()
+    for ann in announcements:
+        ann.expired = bool(ann.expires_at and now > ann.expires_at)
+    return render(request, 'works/announcement_list.html', {
+        'announcements': announcements,
+        'subjects': Subject.objects.filter(is_active=True),
+        'subject_filter': subject_filter or '',
+        'active_filter': active_filter or '',
+    })
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # ТЕСТЫ
 # ══════════════════════════════════════════════════════════════════════════════
 
 @login_required
 def quiz_list(request):
-    quizzes = Quiz.objects.filter(is_active=True).select_related('module').prefetch_related('questions')
+    subject_slug = request.session.get('subject_slug', 'python')
+    qs = Quiz.objects.filter(is_active=True).select_related('module', 'module__subject').prefetch_related('questions')
+    try:
+        current_subject = Subject.objects.get(slug=subject_slug)
+        qs = qs.filter(module__subject=current_subject)
+    except Subject.DoesNotExist:
+        current_subject = None
+    quizzes = list(qs)
 
     attempt_map = {}
     for attempt in QuizAttempt.objects.filter(user=request.user).order_by('-score'):
@@ -965,7 +1004,10 @@ def quiz_list(request):
     for quiz in quizzes:
         quiz.best_attempt = attempt_map.get(quiz.id)
 
-    return render(request, 'works/quiz_list.html', {'quizzes': quizzes})
+    return render(request, 'works/quiz_list.html', {
+        'quizzes': quizzes,
+        'current_subject': current_subject,
+    })
 
 
 @login_required

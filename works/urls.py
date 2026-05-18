@@ -37,6 +37,7 @@ urlpatterns = [
     path('subject/<slug:slug>/', views.switch_subject, name='switch_subject'),
 
     # ── Объявления ────────────────────────────────────────────────────────────
+    path('announcements/', views.announcement_list, name='announcement_list'),
     path('announcements/create/', views.create_announcement, name='create_announcement'),
     path('announcements/<int:pk>/deactivate/', views.deactivate_announcement, name='deactivate_announcement'),
 

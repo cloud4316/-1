@@ -107,7 +107,7 @@
                 {% if work.input_example or work.output_example %}
                 <div class="task-examples">
                     <h3>Примеры:</h3>
-                    
+
                     {% if work.input_example %}
                     <div class="example-card">
                         <div class="example-header">
@@ -117,7 +117,7 @@
                         <pre class="example-code">{{ work.input_example }}</pre>
                     </div>
                     {% endif %}
-                    
+
                     {% if work.output_example %}
                     <div class="example-card">
                         <div class="example-header">
@@ -127,6 +127,26 @@
                         <pre class="example-code">{{ work.output_example }}</pre>
                     </div>
                     {% endif %}
+                </div>
+                {% endif %}
+
+                {% if work.tinkercad_url %}
+                <div class="tinkercad-block">
+                    <div class="tinkercad-header">
+                        <i class="fas fa-microchip"></i>
+                        <span>Симулятор Tinkercad</span>
+                        <a href="{{ work.tinkercad_url }}" target="_blank" class="tinkercad-open-btn" rel="noopener">
+                            <i class="fas fa-external-link-alt"></i> Открыть в полном окне
+                        </a>
+                    </div>
+                    <div class="tinkercad-iframe-wrap">
+                        <iframe src="{{ work.tinkercad_url }}"
+                                width="100%" height="500"
+                                frameborder="0"
+                                allowfullscreen
+                                loading="lazy"
+                                title="Tinkercad симулятор для {{ work.title }}"></iframe>
+                    </div>
                 </div>
                 {% endif %}
             </div>
@@ -145,7 +165,7 @@
                         <label class="file-upload-label">
                             <i class="fas fa-upload"></i>
                             <span id="file-name">Выберите файл с решением</span>
-                            <input type="file" name="code_file" id="code_file" accept=".py,.java,.cpp,.js,.txt" required 
+                            <input type="file" name="code_file" id="code_file" accept=".py,.java,.cpp,.js,.txt,.ino,.c" required
                                    onchange="document.getElementById('file-name').textContent = this.files[0]?.name || 'Выберите файл с решением'">
                         </label>
                         <small class="form-text">Поддерживаемые форматы: .py, .java, .cpp, .js, .txt</small>

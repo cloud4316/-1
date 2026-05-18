@@ -7,7 +7,7 @@ import os
 import re
 import unicodedata
 
-ALLOWED_EXTENSIONS = {".py", ".cpp", ".c", ".java", ".kt", ".js", ".cs"}
+ALLOWED_EXTENSIONS = {".py", ".cpp", ".c", ".java", ".kt", ".js", ".cs", ".ino", ".txt"}
 MAX_FILE_SIZE_MB   = 2
 
 
