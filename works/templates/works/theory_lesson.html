@@ -1,0 +1,286 @@
+{% extends 'works/base.html' %}
+{% block title %}{{ lesson.title }} — Теория{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+{% endblock %}
+{% block content %}
+<div class="lesson-layout">
+  <!-- Боковая панель -->
+  <aside class="lesson-sidebar">
+    <div class="sidebar-header">
+      <a href="{% url 'theory_list' %}" class="back-link"><i class="fas fa-arrow-left"></i> Все разделы</a>
+      <h4>{{ module.title }}</h4>
+    </div>
+    <div class="sidebar-progress">
+      <div class="sp-bar"><div class="sp-fill" style="width:{{ progress_pct }}%"></div></div>
+      <span class="sp-text">{{ done_count }}/{{ total_count }} изучено</span>
+    </div>
+    <nav class="lessons-nav">
+      {% for l in all_lessons %}
+      <a href="{% url 'theory_lesson' l.id %}" class="lesson-nav-item {% if l.id == lesson.id %}active{% endif %}">
+        <span class="lesson-num">{{ forloop.counter }}</span>
+        <span class="lesson-name">{{ l.title }}</span>
+        {% if l.id in completed_ids %}<span class="lesson-done-mark"><i class="fas fa-check-circle"></i></span>{% endif %}
+        <span class="lesson-time"><i class="fas fa-clock"></i> {{ l.estimated_minutes }}м</span>
+      </a>
+      {% endfor %}
+    </nav>
+    {% if module_quizzes %}
+    <div class="sidebar-quizzes">
+      <h5><i class="fas fa-tasks"></i> Тесты по разделу</h5>
+      {% for quiz in module_quizzes %}
+      <a href="{% url 'quiz_detail' quiz.id %}" class="quiz-link">{{ quiz.title }}</a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </aside>
+
+  <!-- Основной контент -->
+  <main class="lesson-main">
+  <button class="sidebar-toggle" id="sidebarToggleBtn" onclick="toggleSidebar()"><i class="fas fa-list"></i> Содержание</button>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    <div class="lesson-topbar">
+      <div class="lesson-breadcrumb">
+        <span>{{ module.title }}</span> <i class="fas fa-chevron-right"></i> <span>Урок {{ current_index|add:1 }}</span>
+      </div>
+      <div class="lesson-progress-indicator">
+        {{ current_index|add:1 }} / {{ all_lessons|length }}
+      </div>
+    </div>
+
+    <article class="lesson-content">
+      <h1>{{ lesson.title }}</h1>
+      <div class="lesson-meta">
+        <span><i class="fas fa-clock"></i> ~{{ lesson.estimated_minutes }} мин</span>
+        {% if is_completed %}<span class="badge-done"><i class="fas fa-check-circle"></i> Изучено</span>{% endif %}
+      </div>
+
+      <div class="theory-body">
+        {{ lesson.content|safe }}
+      </div>
+
+      {% if lesson.code_example %}
+      <div class="code-block-wrap">
+        <div class="code-block-header">
+          <span><i class="fas fa-code"></i> Пример кода</span>
+          <button class="btn-run-code" id="runBtn"><i class="fas fa-play"></i> Запустить</button>
+          <button class="btn-copy" onclick="copyCode()"><i class="fas fa-copy"></i> Копировать</button>
+        </div>
+        <textarea id="codeEditor">{{ lesson.code_example }}</textarea>
+        <div class="code-output" id="codeOutput" style="display:none">
+          <div class="output-header"><i class="fas fa-terminal"></i> Вывод</div>
+          <pre id="outputText"></pre>
+        </div>
+      </div>
+      {% endif %}
+    </article>
+
+    <!-- Навигация между уроками -->
+    <div class="lesson-navigation">
+      {% if prev_lesson %}
+      <a href="{% url 'theory_lesson' prev_lesson.id %}" class="nav-btn nav-prev">
+        <i class="fas fa-arrow-left"></i> {{ prev_lesson.title }}
+      </a>
+      {% else %}<div></div>{% endif %}
+
+      <button class="btn-mark-done {% if is_completed %}done{% endif %}" id="markDoneBtn"
+              data-lesson="{{ lesson.id }}" onclick="markDone(this)">
+        {% if is_completed %}
+          <i class="fas fa-check-circle"></i> Изучено
+        {% else %}
+          <i class="far fa-circle"></i> Отметить как изученное
+        {% endif %}
+      </button>
+
+      {% if next_lesson %}
+      <a href="{% url 'theory_lesson' next_lesson.id %}" class="nav-btn nav-next">
+        {{ next_lesson.title }} <i class="fas fa-arrow-right"></i>
+      </a>
+      {% elif module_quizzes %}
+      <a href="{% url 'quiz_detail' module_quizzes.0.id %}" class="nav-btn nav-next btn-quiz">
+        <i class="fas fa-tasks"></i> Пройти тест
+      </a>
+      {% else %}<div></div>{% endif %}
+    </div>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script>
+{% if lesson.code_example %}
+const editor = CodeMirror.fromTextArea(document.getElementById('codeEditor'), {
+  mode: 'python', theme: 'dracula', lineNumbers: true,
+  indentUnit: 4, tabSize: 4, indentWithTabs: false,
+  extraKeys: {"Tab": function(cm){cm.replaceSelection("    ");}},
+  readOnly: false,
+});
+editor.setSize('100%', 'auto');
+
+let _pyodide = null;
+let _pyodideLoading = false;
+
+async function _getPyodide() {
+  if (_pyodide) return _pyodide;
+  if (_pyodideLoading) {
+    while (_pyodideLoading) await new Promise(r => setTimeout(r, 200));
+    return _pyodide;
+  }
+  _pyodideLoading = true;
+  await new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js';
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+  _pyodide = await loadPyodide();
+  _pyodideLoading = false;
+  return _pyodide;
+}
+
+document.getElementById('runBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('runBtn');
+  const output = document.getElementById('codeOutput');
+  const text = document.getElementById('outputText');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка...';
+  btn.disabled = true;
+  output.style.display = 'block';
+  text.textContent = 'Загрузка интерпретатора...';
+  text.className = '';
+
+  try {
+    const py = await _getPyodide();
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Выполняется...';
+    text.textContent = 'Выполняется...';
+    py.runPython(`
+import sys, io
+sys.stdout = io.StringIO()
+sys.stderr = io.StringIO()
+`);
+    try {
+      py.runPython(editor.getValue());
+      const out = py.runPython('sys.stdout.getvalue()');
+      const err = py.runPython('sys.stderr.getvalue()');
+      text.textContent = (out + err) || '(нет вывода)';
+      text.className = err ? 'error-output' : '';
+    } catch(pyErr) {
+      text.textContent = String(pyErr);
+      text.className = 'error-output';
+    }
+  } catch(e) {
+    try {
+      const formData = new FormData();
+      formData.append('code', editor.getValue());
+      formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+      const resp = await fetch('/api/run-code/', {method:'POST', body: formData});
+      const data = await resp.json();
+      text.textContent = data.output || data.error || 'Нет вывода';
+      text.className = data.status === 'error' ? 'error-output' : '';
+    } catch(fe) {
+      text.textContent = 'Ошибка соединения';
+      text.className = 'error-output';
+    }
+  }
+  btn.innerHTML = '<i class="fas fa-play"></i> Запустить';
+  btn.disabled = false;
+});
+
+function copyCode() {
+  navigator.clipboard.writeText(editor.getValue());
+  const btn = document.querySelector('.btn-copy');
+  btn.innerHTML = '<i class="fas fa-check"></i> Скопировано';
+  setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy"></i> Копировать'; }, 1500);
+}
+{% endif %}
+
+function markDone(btn) {
+  const lessonId = btn.dataset.lesson;
+  fetch(`/theory/lesson/${lessonId}/done/`, {
+    method: 'POST',
+    headers: {'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json'},
+  }).then(() => {
+    btn.innerHTML = '<i class="fas fa-check-circle"></i> Изучено';
+    btn.classList.add('done');
+    document.querySelectorAll('.lesson-meta .badge-done').forEach(e => e.remove());
+    const meta = document.querySelector('.lesson-meta');
+    if(meta) meta.insertAdjacentHTML('beforeend','<span class="badge-done"><i class="fas fa-check-circle"></i> Изучено</span>');
+  });
+}
+
+function toggleSidebar() {
+  document.querySelector('.lesson-sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.querySelector('.lesson-sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+</script>
+
+<style>
+.lesson-layout{display:grid;grid-template-columns:280px 1fr;min-height:calc(100vh - 70px);max-width:1200px;margin:0 auto}
+.lesson-sidebar{border-right:1px solid #e5e7eb;padding:1.5rem 0;position:sticky;top:70px;height:calc(100vh - 70px);overflow-y:auto}
+.sidebar-header{padding:0 1rem 1rem;border-bottom:1px solid #e5e7eb}
+.back-link{display:flex;align-items:center;gap:.5rem;color:#667eea;text-decoration:none;font-size:.85rem;margin-bottom:.75rem}
+.sidebar-header h4{font-size:.9rem;color:#374151;margin:0}
+.lessons-nav{padding:.5rem 0}
+.lesson-nav-item{display:grid;grid-template-columns:24px 1fr auto;align-items:center;gap:.5rem;padding:.6rem 1rem;text-decoration:none;color:#374151;font-size:.85rem;transition:background .15s}
+.lesson-nav-item:hover{background:#f9fafb}
+.lesson-nav-item.active{background:#eff6ff;color:#667eea;font-weight:500}
+.lesson-num{width:24px;height:24px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:600}
+.lesson-nav-item.active .lesson-num{background:#667eea;color:#fff}
+.lesson-time{font-size:.75rem;color:#9ca3af}
+.sidebar-quizzes{padding:1rem;border-top:1px solid #e5e7eb;margin-top:.5rem}
+.sidebar-quizzes h5{font-size:.8rem;color:#6b7280;margin-bottom:.5rem}
+.quiz-link{display:block;padding:.4rem .6rem;background:#fef3c7;color:#d97706;border-radius:6px;text-decoration:none;font-size:.82rem}
+.lesson-main{padding:2rem;max-width:800px}
+.lesson-topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;color:#6b7280;font-size:.85rem}
+.lesson-breadcrumb{display:flex;align-items:center;gap:.5rem}
+.lesson-content h1{font-size:1.6rem;margin-bottom:.5rem}
+.lesson-meta{display:flex;gap:1rem;align-items:center;color:#6b7280;font-size:.85rem;margin-bottom:1.5rem}
+.badge-done{background:#d1fae5;color:#059669;padding:.2rem .6rem;border-radius:20px;font-size:.8rem}
+.theory-body h2{font-size:1.2rem;margin:1.5rem 0 .75rem;color:#1f2937}
+.theory-body h3{font-size:1rem;margin:1rem 0 .5rem;color:#374151}
+.theory-body p{line-height:1.7;margin-bottom:.75rem;color:#374151}
+.theory-body ul,.theory-body ol{padding-left:1.5rem;margin-bottom:.75rem}
+.theory-body li{margin-bottom:.3rem;line-height:1.6}
+.theory-body code{background:#f3f4f6;padding:.15rem .4rem;border-radius:4px;font-family:monospace;font-size:.9em}
+.theory-body pre{background:#1e1e2e;color:#cdd6f4;padding:1rem;border-radius:8px;overflow-x:auto;margin-bottom:1rem}
+.theory-body pre code{background:none;padding:0;color:inherit}
+.theory-body svg{width:100% !important;height:auto !important;display:block;overflow:visible}
+.theory-body .fc-diagram{max-width:640px;margin:1.5rem auto;overflow:visible}
+.theory-body div[style*="text-align:center"]{overflow:visible}
+.theory-body div[style*="max-width"]{overflow:visible}
+.theory-body div[style*="overflow-x"]{overflow:visible !important}
+.theory-body div[style*="overflow-x"] svg{max-width:640px;margin:0 auto;display:block}
+.theory-table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.9rem}
+.theory-table th{background:#f3f4f6;padding:.5rem .75rem;text-align:left;font-weight:600}
+.theory-table td{padding:.45rem .75rem;border-bottom:1px solid #f3f4f6}
+.tip{background:#eff6ff;border-left:4px solid #667eea;padding:.75rem 1rem;border-radius:0 8px 8px 0;margin:1rem 0;font-size:.9rem}
+.warning{background:#fff7ed;border-left:4px solid #f97316;padding:.75rem 1rem;border-radius:0 8px 8px 0;margin:1rem 0;font-size:.9rem}
+.code-block-wrap{margin:1.5rem 0;border:1px solid #374151;border-radius:10px;overflow:hidden}
+.code-block-header{background:#282a36;padding:.6rem 1rem;display:flex;align-items:center;gap:.75rem;color:#f8f8f2;font-size:.85rem}
+.code-block-header span{flex:1}
+.btn-run-code{background:#50fa7b;color:#282a36;border:none;padding:.3rem .75rem;border-radius:5px;cursor:pointer;font-size:.82rem;font-weight:600}
+.btn-copy{background:transparent;border:1px solid #6272a4;color:#f8f8f2;padding:.3rem .75rem;border-radius:5px;cursor:pointer;font-size:.82rem}
+.CodeMirror{font-size:.9rem;max-height:400px}
+.code-output{background:#1e1e2e;border-top:1px solid #374151}
+.output-header{padding:.4rem 1rem;background:#282a36;color:#6272a4;font-size:.8rem}
+#outputText{padding:.75rem 1rem;color:#f8f8f2;font-family:monospace;font-size:.85rem;white-space:pre-wrap;margin:0}
+#outputText.error-output{color:#ff5555}
+.lesson-navigation{display:flex;justify-content:space-between;align-items:center;margin-top:2.5rem;padding-top:1.5rem;border-top:1px solid #e5e7eb}
+.nav-btn{display:flex;align-items:center;gap:.5rem;padding:.6rem 1.2rem;border-radius:8px;text-decoration:none;color:#374151;border:1px solid #e5e7eb;font-size:.9rem;transition:.15s}
+.nav-btn:hover{border-color:#667eea;color:#667eea}
+.btn-quiz{background:#fef3c7;color:#d97706;border-color:#fcd34d}
+.btn-mark-done{background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;padding:.6rem 1.2rem;border-radius:8px;cursor:pointer;font-size:.9rem;display:flex;align-items:center;gap:.5rem}
+.btn-mark-done.done{background:#d1fae5;color:#059669;border-color:#6ee7b7}
+@media(max-width:768px){.lesson-layout{grid-template-columns:1fr}.lesson-sidebar{display:none}.lesson-main{padding:1rem}}
+.sidebar-progress{padding:.5rem 1rem .25rem;display:flex;flex-direction:column;gap:.3rem}
+.sp-bar{height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden}
+.sp-fill{height:100%;background:linear-gradient(90deg,#667eea,#764ba2);border-radius:3px;transition:width .3s}
+.sp-text{font-size:.75rem;color:#6b7280}
+.lesson-done-mark{color:#10b981;font-size:.75rem;margin-left:.25rem}
+</style>
+{% endblock %}

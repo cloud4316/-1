@@ -1,0 +1,89 @@
+{% load static %}
+
+<div class="works-grid">
+  {% for work in works %}
+    <div class="work-card" data-work-id="{{ work.id }}">
+      <div class="work-card-inner">
+        <div class="work-content">
+          <div class="work-title">
+            <h3>{{ work.title }}</h3>
+            <span class="work-topic">{{ work.topic }}</span>
+          </div>
+          <div class="work-description">
+            <p>{{ work.description|truncatewords:20 }}</p>
+          </div>
+          <div class="work-info">
+            <div class="info-item">
+              <i class="fas fa-star"></i>
+              <span>{{ work.difficulty|title }}</span>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-code"></i>
+              <span>{{ work.language|title }}</span>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-trophy"></i>
+              <span>{{ work.max_score }} баллов</span>
+            </div>
+            {% if work.deadline %}
+            <div class="info-item">
+              <i class="fas fa-calendar"></i>
+              <span>{{ work.deadline|date:"d.m.Y" }}</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="work-actions">
+          {% if work.user_status == 'correct' %}
+            <a href="{% url 'work_detail' work.id %}" class="btn btn-success">
+              <i class="fas fa-check"></i> Решено
+            </a>
+          {% elif work.user_status == 'partially_correct' %}
+            <a href="{% url 'work_detail' work.id %}" class="btn btn-warning">
+              <i class="fas fa-exclamation-triangle"></i> Частично
+            </a>
+          {% elif work.user_status == 'submitted' %}
+            <a href="{% url 'work_detail' work.id %}" class="btn btn-info">
+              <i class="fas fa-clock"></i> На проверке
+            </a>
+          {% elif work.user_status == 'incorrect' %}
+            <a href="{% url 'work_detail' work.id %}" class="btn btn-danger">
+              <i class="fas fa-times"></i> Неверно
+            </a>
+          {% else %}
+            <a href="{% url 'work_detail' work.id %}" class="btn btn-primary">
+              <i class="fas fa-play"></i> Начать
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="empty-state">
+      <div class="empty-icon">
+        {% if request.GET.q or request.GET.difficulty != 'all' or request.GET.topic != 'all' %}
+          <i class="fas fa-search"></i>
+        {% else %}
+          <i class="fas fa-tasks"></i>
+        {% endif %}
+      </div>
+      {% if request.GET.q or request.GET.difficulty != 'all' or request.GET.topic != 'all' %}
+        <h3>По вашему запросу ничего не найдено</h3>
+        <p>Попробуйте изменить фильтры или поисковый запрос</p>
+        <div style="margin-top: 1.5rem;">
+          <a href="{% url 'work_list' %}" class="btn btn-primary">
+            <i class="fas fa-refresh"></i>Сбросить фильтры
+          </a>
+        </div>
+      {% else %}
+        <h3>Пока нет доступных работ</h3>
+        <p>Новые практические задания появятся здесь в ближайшее время</p>
+        <div style="margin-top: 1.5rem;">
+          <a href="{% url 'profile' %}" class="btn btn-primary">
+            <i class="fas fa-user"></i>Перейти в профиль
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>

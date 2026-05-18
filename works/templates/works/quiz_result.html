@@ -1,0 +1,140 @@
+{% extends 'works/base.html' %}
+{% block title %}Результат: {{ quiz.title }}{% endblock %}
+{% block content %}
+<div class="result-page">
+
+  <div class="result-hero {% if passed %}hero-pass{% else %}hero-fail{% endif %}">
+    <div class="result-icon">{% if passed %}🏆{% else %}🔄{% endif %}</div>
+    <h1>{% if passed %}Тест пройден!{% else %}Попробуй ещё раз{% endif %}</h1>
+    <div class="score-ring">
+      <svg viewBox="0 0 100 100" width="120" height="120">
+        <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="10"/>
+        <circle cx="50" cy="50" r="42" fill="none" stroke="white" stroke-width="10"
+          stroke-dasharray="{{ score|floatformat:0 }} 500"
+          stroke-linecap="round" transform="rotate(-90 50 50)"/>
+      </svg>
+      <div class="ring-label"><span class="ring-score">{{ score }}%</span></div>
+    </div>
+    <div class="result-stats">
+      <div class="stat"><span class="sv">{{ correct }}</span><span class="sl">Верных</span></div>
+      <div class="stat"><span class="sv">{{ errors }}</span><span class="sl">Ошибок</span></div>
+      <div class="stat"><span class="sv">{{ quiz.pass_score }}%</span><span class="sl">Порог</span></div>
+    </div>
+    {% if not passed %}<p class="retry-hint">Набери {{ quiz.pass_score }}% для прохождения. Ты набрал {{ score }}%.</p>{% endif %}
+  </div>
+
+  <h2 class="review-title">Разбор ответов</h2>
+
+  {% for question in questions %}
+  <div class="review-card" id="rcard_{{ question.id }}">
+    <div class="rcard-header">
+      <span class="q-num">{{ forloop.counter }}</span>
+      <span class="q-verdict" id="verdict_{{ question.id }}"></span>
+    </div>
+    <p class="q-text">{{ question.text|linebreaksbr }}</p>
+    {% if question.code_snippet %}<pre class="q-code">{{ question.code_snippet }}</pre>{% endif %}
+    <div class="choices-wrap">
+      {% for choice in question.choices.all %}
+      <div class="choice-item" id="rc_{{ question.id }}_{{ choice.id }}"
+           data-qid="{{ question.id }}" data-cid="{{ choice.id }}" data-correct="{{ choice.is_correct|lower }}">
+        <span class="ci-icon">{% if choice.is_correct %}✓{% else %}○{% endif %}</span>
+        <span>{{ choice.text }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% if question.explanation %}
+    <div class="explanation" id="exp_{{ question.id }}" style="display:none">
+      💡 {{ question.explanation }}
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+  <div class="result-actions">
+    <a href="{% url 'quiz_detail' quiz.id %}" class="btn btn-primary">🔄 Пройти ещё раз</a>
+    <a href="{% url 'quiz_list' %}" class="btn btn-outline">📋 Все тесты</a>
+    {% if quiz.module %}<a href="{% url 'theory_list' %}" class="btn btn-outline">📖 К теории</a>{% endif %}
+  </div>
+</div>
+
+<script>
+(function(){
+  const results = JSON.parse('{{ results_json|escapejs }}');
+  Object.entries(results).forEach(([qid, data]) => {
+    const card = document.getElementById('rcard_' + qid);
+    if (!card) return;
+
+    // Заголовок карточки
+    const verdict = document.getElementById('verdict_' + qid);
+    if (data.is_correct) {
+      card.classList.add('correct');
+      verdict.textContent = '✓ Верно';
+      verdict.style.color = '#059669';
+    } else {
+      card.classList.add('wrong');
+      verdict.textContent = '✗ Неверно';
+      verdict.style.color = '#dc2626';
+    }
+
+    // Подсветка вариантов
+    (data.chosen || []).forEach(cid => {
+      const el = document.getElementById('rc_' + qid + '_' + cid);
+      if (el) {
+        const isCorrect = el.dataset.correct === 'true';
+        el.classList.add(isCorrect ? 'chosen-correct' : 'chosen-wrong');
+      }
+    });
+
+    // Правильные ответы (если студент ошибся)
+    if (!data.is_correct) {
+      (data.correct || []).forEach(cid => {
+        const el = document.getElementById('rc_' + qid + '_' + cid);
+        if (el) el.classList.add('is-correct');
+      });
+      const exp = document.getElementById('exp_' + qid);
+      if (exp) exp.style.display = 'block';
+    }
+  });
+})();
+</script>
+
+<style>
+.result-page{max-width:780px;margin:0 auto;padding:2rem 1rem}
+.result-hero{border-radius:16px;padding:2.5rem;text-align:center;margin-bottom:2rem;color:#fff;position:relative}
+.hero-pass{background:linear-gradient(135deg,#10b981,#059669)}
+.hero-fail{background:linear-gradient(135deg,#6366f1,#4f46e5)}
+.result-icon{font-size:2.5rem;margin-bottom:.5rem}
+.result-hero h1{font-size:1.8rem;margin-bottom:1.5rem}
+.score-ring{position:relative;display:inline-block;margin-bottom:1.5rem}
+.ring-label{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.ring-score{font-size:1.6rem;font-weight:700}
+.result-stats{display:flex;justify-content:center;gap:2rem}
+.stat{display:flex;flex-direction:column;align-items:center}
+.sv{font-size:1.6rem;font-weight:700}
+.sl{font-size:.8rem;opacity:.8}
+.retry-hint{margin-top:1rem;font-size:.9rem;opacity:.85}
+.review-title{font-size:1.3rem;margin:1.5rem 0 1rem}
+.review-card{background:#fff;border:2px solid #e5e7eb;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.review-card.correct{border-color:#6ee7b7}
+.review-card.wrong{border-color:#fca5a5}
+.rcard-header{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem}
+.q-num{width:28px;height:28px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.82rem;flex-shrink:0}
+.review-card.correct .q-num{background:#d1fae5;color:#059669}
+.review-card.wrong .q-num{background:#fee2e2;color:#dc2626}
+.q-text{font-size:.95rem;line-height:1.6;margin-bottom:.75rem;color:#1f2937;white-space:pre-wrap}
+.q-code{background:#1e1e2e;color:#f8f8f2;padding:.75rem;border-radius:8px;font-size:.82rem;overflow-x:auto;margin-bottom:.75rem;white-space:pre}
+.choices-wrap{display:flex;flex-direction:column;gap:.4rem;margin-bottom:.75rem}
+.choice-item{display:flex;align-items:flex-start;gap:.6rem;padding:.5rem .75rem;border-radius:8px;font-size:.9rem;background:#f9fafb;border:1.5px solid transparent}
+.choice-item.is-correct{background:#d1fae5;border-color:#6ee7b7;font-weight:500}
+.choice-item.chosen-correct{background:#d1fae5;border-color:#10b981;font-weight:600}
+.choice-item.chosen-wrong{background:#fee2e2;border-color:#ef4444}
+.ci-icon{font-weight:700;color:#9ca3af;flex-shrink:0}
+.is-correct .ci-icon,.chosen-correct .ci-icon{color:#059669}
+.chosen-wrong .ci-icon{color:#dc2626}
+.explanation{background:#fffbeb;border-left:4px solid #f59e0b;padding:.6rem .9rem;border-radius:0 8px 8px 0;font-size:.85rem;color:#92400e}
+.result-actions{display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center;margin-top:2rem}
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1.4rem;border-radius:8px;text-decoration:none;font-weight:500;font-size:.9rem}
+.btn-primary{background:#667eea;color:#fff}
+.btn-outline{color:#667eea;border:1.5px solid #667eea;background:transparent}
+</style>
+{% endblock %}

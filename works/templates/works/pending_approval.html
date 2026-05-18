@@ -1,0 +1,75 @@
+{% extends 'works/base.html' %}
+{% block title %}Заявка отправлена{% endblock %}
+{% block content %}
+<div class="pending-page">
+  <div class="pending-card">
+    <div class="pending-icon">⏳</div>
+    <h1>Заявка отправлена!</h1>
+    <p class="pending-name">{{ full_name }}{% if group %} · {{ group }}{% endif %}</p>
+
+    <div class="steps">
+      <div class="step done">
+        <div class="step-icon"><i class="fas fa-check"></i></div>
+        <div class="step-text">
+          <strong>Заявка создана</strong>
+          <span>Ваши данные сохранены в системе</span>
+        </div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step pending">
+        <div class="step-icon"><i class="fas fa-clock"></i></div>
+        <div class="step-text">
+          <strong>Ожидание преподавателя</strong>
+          <span>Преподаватель должен одобрить вашу заявку</span>
+        </div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step future">
+        <div class="step-icon"><i class="fas fa-sign-in-alt"></i></div>
+        <div class="step-text">
+          <strong>Вход в систему</strong>
+          <span>После одобрения вы сможете войти</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="notice-box">
+      <i class="fas fa-chalkboard-teacher"></i>
+      <div>
+        <strong>Что делать дальше?</strong><br>
+        Сообщите преподавателю о том, что зарегистрировались в системе.
+        Как только он одобрит заявку, вы сможете войти с данными:<br><br>
+        <b>Логин:</b> {{ full_name }}<br>
+        <b>Пароль:</b> тот, что вы указали при регистрации
+      </div>
+    </div>
+
+    <a href="{% url 'custom_login' %}" class="btn-login">
+      <i class="fas fa-sign-in-alt"></i> Перейти к входу
+    </a>
+  </div>
+</div>
+
+<style>
+.pending-page{min-height:80vh;display:flex;align-items:center;justify-content:center;padding:2rem 1rem}
+.pending-card{background:#fff;border-radius:16px;box-shadow:0 4px 30px rgba(0,0,0,.1);padding:2.5rem;max-width:520px;width:100%;text-align:center}
+.pending-icon{font-size:4rem;margin-bottom:1rem;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.pending-card h1{font-size:1.6rem;margin-bottom:.4rem}
+.pending-name{color:#667eea;font-weight:600;font-size:1.05rem;margin-bottom:2rem}
+.steps{text-align:left;margin-bottom:1.75rem}
+.step{display:flex;align-items:flex-start;gap:.9rem}
+.step-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.85rem}
+.step.done .step-icon{background:#d1fae5;color:#059669}
+.step.pending .step-icon{background:#fff7ed;color:#d97706}
+.step.future .step-icon{background:#f3f4f6;color:#9ca3af}
+.step-text{display:flex;flex-direction:column;gap:.2rem;padding-top:.3rem}
+.step-text strong{font-size:.9rem;color:#1f2937}
+.step-text span{font-size:.8rem;color:#6b7280}
+.step-line{width:2px;height:24px;background:#e5e7eb;margin:4px 0 4px 17px}
+.notice-box{background:#eff6ff;border-radius:10px;padding:1rem 1.25rem;text-align:left;display:flex;gap:.9rem;margin-bottom:1.5rem;font-size:.88rem;color:#1e40af;line-height:1.7}
+.notice-box i{font-size:1.3rem;flex-shrink:0;margin-top:.1rem}
+.btn-login{display:inline-flex;align-items:center;gap:.5rem;background:#667eea;color:#fff;text-decoration:none;padding:.7rem 2rem;border-radius:8px;font-weight:600;font-size:.95rem}
+.btn-login:hover{background:#5a67d8}
+</style>
+{% endblock %}

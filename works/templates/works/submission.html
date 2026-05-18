@@ -1,0 +1,158 @@
+{% extends 'works/base.html' %}
+{% load static %}
+
+{% block title %}Решение отправлено - {{ work.title }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'works/css/submission.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="submission-container">
+    <div class="submission-header">
+        <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <h1>Решение успешно отправлено!</h1>
+        <p>Ваше решение загружено и отправлено на проверку</p>
+    </div>
+
+    <div class="submission-card">
+        <div class="submission-info">
+            <div class="info-section">
+                <h3><i class="fas fa-tasks"></i>Информация о работе</h3>
+                <div class="info-item">
+                    <span class="label">Название:</span>
+                    <span class="value">{{ work.title }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Номер:</span>
+                    <span class="value">#{{ work.order }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Сложность:</span>
+                    <span class="value difficulty-{{ work.difficulty }}">{{ work.get_difficulty_display }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Максимальный балл:</span>
+                    <span class="value">{{ work.max_score }}</span>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h3><i class="fas fa-file-upload"></i>Информация о решении</h3>
+                <div class="info-item">
+                    <span class="label">Файл:</span>
+                    <span class="value file-name">
+                        <i class="fas fa-file-code"></i>
+                        {{ submission.original_filename }}
+                    </span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Статус:</span>
+                    <span class="status-badge status-{{ submission.status }}">
+                        <i class="fas fa-{% if submission.status == 'correct' %}check{% elif submission.status == 'incorrect' %}times{% else %}clock{% endif %}"></i>
+                        {{ submission.get_status_display }}
+                    </span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Дата отправки:</span>
+                    <span class="value">{{ submission.submitted_at|date:"d.m.Y H:i" }}</span>
+                </div>
+                {% if submission.score > 0 %}
+                <div class="info-item">
+                    <span class="label">Баллы:</span>
+                    <span class="value score">{{ submission.score }}/{{ work.max_score }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="submission-actions">
+            <a href="{% url 'solution_detail' submission.id %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-eye"></i>
+                Подробности решения
+            </a>
+            <a href="{% url 'work_detail' work.id %}" class="btn btn-outline btn-lg">
+                <i class="fas fa-arrow-left"></i>
+                Назад к задаче
+            </a>
+            <a href="{% url 'work_list' %}" class="btn btn-secondary">
+                <i class="fas fa-list"></i>
+                Все работы
+            </a>
+        </div>
+    </div>
+
+    {% if submission.status == 'checking' %}
+    <div class="checking-status">
+        <div class="checking-animation">
+            <div class="spinner"></div>
+        </div>
+        <h3>Решение проверяется...</h3>
+        <p>Пожалуйста, подождите. Результаты проверки появятся через несколько минут.</p>
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="next-steps">
+        <h3><i class="fas fa-lightbulb"></i>Что дальше?</h3>
+        <div class="steps-grid">
+            <div class="step-item">
+                <div class="step-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="step-content">
+                    <h4>Ожидайте проверки</h4>
+                    <p>Ваше решение будет проверено автоматически в течение нескольких минут</p>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="step-content">
+                    <h4>Проверьте результаты</h4>
+                    <p>Перейдите к подробностям решения, чтобы увидеть результаты тестов</p>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-icon">
+                    <i class="fas fa-redo"></i>
+                </div>
+                <div class="step-content">
+                    <h4>Исправьте ошибки</h4>
+                    <p>Если есть ошибки, исправьте их и отправьте новое решение</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Автоматическое обновление страницы при проверке
+{% if submission.status == 'checking' %}
+setTimeout(function() {
+    location.reload();
+}, 30000); // Обновляем каждые 30 секунд
+{% endif %}
+
+// Анимация прогресса
+const progressFill = document.querySelector('.progress-fill');
+if (progressFill) {
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += Math.random() * 10;
+        if (progress > 100) progress = 100;
+        progressFill.style.width = progress + '%';
+        if (progress >= 100) {
+            clearInterval(interval);
+        }
+    }, 500);
+}
+</script>
+{% endblock %}

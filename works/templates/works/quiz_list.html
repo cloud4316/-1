@@ -1,0 +1,65 @@
+{% extends 'works/base.html' %}
+{% block title %}Тесты — AlgorithmMaster{% endblock %}
+{% block content %}
+<div class="page-container">
+  <div class="page-header">
+    <h1><i class="fas fa-tasks"></i> Тесты и проверочные работы</h1>
+    <p class="page-subtitle">Проверь свои знания по пройденным темам</p>
+  </div>
+
+  <div class="quiz-grid">
+    {% for quiz in quizzes %}
+    <div class="quiz-card">
+      <div class="quiz-card-header">
+        {% if quiz.module %}<span class="quiz-module-badge"><i class="fas fa-book"></i> {{ quiz.module.title }}</span>{% endif %}
+        {% if quiz.best_attempt %}
+          {% if quiz.best_attempt.passed %}
+            <span class="quiz-status passed"><i class="fas fa-check-circle"></i> Пройден</span>
+          {% else %}
+            <span class="quiz-status failed"><i class="fas fa-times-circle"></i> Не пройден</span>
+          {% endif %}
+        {% else %}
+          <span class="quiz-status new"><i class="fas fa-circle"></i> Новый</span>
+        {% endif %}
+      </div>
+      <h3 class="quiz-title">{{ quiz.title }}</h3>
+      {% if quiz.description %}<p class="quiz-desc">{{ quiz.description }}</p>{% endif %}
+      <div class="quiz-meta">
+        <span><i class="fas fa-question-circle"></i> {{ quiz.questions_count }} вопросов</span>
+        <span><i class="fas fa-award"></i> Порог: {{ quiz.pass_score }}%</span>
+        {% if quiz.best_attempt %}<span class="score-badge {% if quiz.best_attempt.passed %}pass{% else %}fail{% endif %}">Лучший: {{ quiz.best_attempt.score }}%</span>{% endif %}
+      </div>
+      <a href="{% url 'quiz_detail' quiz.id %}" class="btn-start-quiz">
+        {% if quiz.best_attempt %}<i class="fas fa-redo"></i> Пройти снова{% else %}<i class="fas fa-play"></i> Начать тест{% endif %}
+      </a>
+    </div>
+    {% empty %}
+    <div class="empty-state"><i class="fas fa-tasks"></i><p>Тесты не добавлены.<br>Запусти: <code>python manage.py seed_quizzes</code></p></div>
+    {% endfor %}
+  </div>
+</div>
+<style>
+.page-container{max-width:1100px;margin:0 auto;padding:2rem 1rem}
+.page-header{margin-bottom:2rem}
+.page-header h1{font-size:1.8rem;margin-bottom:.5rem}
+.page-subtitle{color:#6b7280}
+.quiz-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.5rem}
+.quiz-card{background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:1.5rem;display:flex;flex-direction:column;gap:.75rem;transition:box-shadow .2s}
+.quiz-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.08)}
+.quiz-card-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem}
+.quiz-module-badge{font-size:.78rem;color:#6b7280;background:#f3f4f6;padding:.2rem .6rem;border-radius:20px}
+.quiz-status{font-size:.8rem;padding:.2rem .7rem;border-radius:20px;font-weight:500}
+.quiz-status.passed{background:#d1fae5;color:#059669}
+.quiz-status.failed{background:#fee2e2;color:#dc2626}
+.quiz-status.new{background:#eff6ff;color:#667eea}
+.quiz-title{font-size:1.1rem;font-weight:600;margin:0}
+.quiz-desc{color:#6b7280;font-size:.9rem;margin:0}
+.quiz-meta{display:flex;gap:.75rem;flex-wrap:wrap;font-size:.82rem;color:#9ca3af}
+.score-badge{padding:.15rem .5rem;border-radius:10px;font-weight:600}
+.score-badge.pass{background:#d1fae5;color:#059669}
+.score-badge.fail{background:#fee2e2;color:#dc2626}
+.btn-start-quiz{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;background:#667eea;color:#fff;text-decoration:none;padding:.6rem 1.2rem;border-radius:8px;font-weight:500;margin-top:.25rem}
+.empty-state{grid-column:1/-1;text-align:center;padding:3rem;color:#9ca3af}
+.empty-state i{font-size:3rem;display:block;margin-bottom:1rem}
+</style>
+{% endblock %}

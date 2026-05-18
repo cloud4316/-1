@@ -1,0 +1,30 @@
+{% extends 'works/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+	<div class="page-header">
+		<h1 class="section-title"><i class="fas fa-chart-line"></i> Прогресс по темам</h1>
+		<p class="text-center">Ваш прогресс в разделах курса</p>
+	</div>
+
+	<div class="works-grid">
+		<div class="work-card">
+			<h3>Итоги</h3>
+			<p><strong>Всего работ:</strong> {{ stats.total }}</p>
+			<p><strong>Завершено:</strong> {{ stats.solved }}</p>
+		</div>
+
+		<div class="work-card">
+			<h3>Темы</h3>
+			<ul class="solutions-list">
+				{% for t in topics %}
+				<li>{{ t.name }} — {{ t.percent }}%</li>
+				{% empty %}
+				<li>Нет данных по темам</li>
+				{% endfor %}
+			</ul>
+		</div>
+	</div>
+</div>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends 'works/base.html' %}
+{% block title %}Вход — AlgorithmMaster{% endblock %}
+{% block content %}
+<div style="min-height:calc(100vh - var(--nav-height));display:flex;align-items:center;justify-content:center;padding:2rem 1rem;background:linear-gradient(135deg,var(--primary-bg) 0%,var(--bg) 100%)">
+  <div class="card animate-in" style="width:100%;max-width:420px">
+    <div class="card-body p-4">
+      <div style="text-align:center;margin-bottom:2rem">
+        <div style="width:56px;height:56px;background:linear-gradient(135deg,var(--primary),#8b5cf6);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;margin:0 auto .75rem;box-shadow:0 4px 15px rgba(99,102,241,.35)">
+          <i class="fas fa-code" style="color:#fff;font-size:1.4rem"></i>
+        </div>
+        <h1 style="font-size:1.5rem;margin-bottom:.3rem">Вход в систему</h1>
+        <p class="text-muted text-sm">AlgorithmMaster</p>
+      </div>
+
+      {% if error == 'PENDING' %}
+      <div class="alert alert-warning">
+        <i class="fas fa-clock"></i>
+        <div><strong>Заявка ещё не одобрена</strong><br>Сообщите преподавателю и дождитесь подтверждения.</div>
+      </div>
+      {% elif error %}
+      <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i>{{ error }}</div>
+      {% endif %}
+
+      {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags }}"><i class="fas fa-info-circle"></i>{{ msg }}</div>
+      {% endfor %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-user"></i> Фамилия и Имя</label>
+          <input type="text" name="full_name" value="{{ form.full_name.value|default:'' }}"
+                 placeholder="Иванов Иван" class="form-input{% if form.full_name.errors %} error{% endif %}"
+                 autofocus autocomplete="off">
+          <span class="form-hint">Для студентов: «Иванов Иван» &nbsp;|&nbsp; Для преподавателя: «admin admin»</span>
+          {% for e in form.full_name.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-lock"></i> Пароль</label>
+          <div class="pw-wrap">
+            <input type="password" name="password" id="pw" placeholder="Ваш пароль"
+                   class="form-input{% if form.password.errors %} error{% endif %}">
+            <button type="button" class="pw-toggle" onclick="this.previousElementSibling.type=this.previousElementSibling.type==='password'?'text':'password';this.innerHTML=this.previousElementSibling.type==='password'?'<i class=fas fa-eye></i>':'<i class=fas fa-eye-slash></i>'">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+          {% for e in form.password.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full btn-lg mt-2">
+          <i class="fas fa-sign-in-alt"></i> Войти
+        </button>
+      </form>
+
+      <div class="divider-text">нет аккаунта?</div>
+      <a href="{% url 'register' %}" class="btn btn-ghost btn-full">
+        <i class="fas fa-user-plus"></i> Подать заявку преподавателю
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,161 @@
+{% extends 'works/base.html' %}
+{% block title %}AlgorithmMaster — Платформа для изучения алгоритмов{% endblock %}
+{% block content %}
+
+{% if user.is_authenticated and user.is_staff and user.username == 'admin' %}
+<div class="alert alert-warning animate-in" style="margin:1rem 1.5rem 0">
+  <i class="fas fa-exclamation-triangle"></i>
+  <span>Используется стандартный пароль! <a href="{% url 'change_password' %}" style="font-weight:700;text-decoration:underline">Смените пароль</a> для безопасности.</span>
+</div>
+{% endif %}
+
+{% if user.is_authenticated %}
+<!-- Дашборд студента -->
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>Добро пожаловать, {{ user.first_name|default:user.username }}! 👋</h1>
+      <p class="page-subtitle">Продолжай учёбу с того места где остановился</p>
+    </div>
+    {% if user.is_staff %}
+    <a href="{% url 'teacher_analytics' %}" class="btn btn-primary">
+      <i class="fas fa-chart-bar"></i> Аналитика
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Статистика -->
+  {% if progress %}
+  <div class="stat-grid">
+    <div class="stat-card gradient-primary animate-in">
+      <div class="stat-number">{{ progress.completed_works }}</div>
+      <div class="stat-label">Решено задач</div>
+    </div>
+    <div class="stat-card gradient-success animate-in" style="animation-delay:.05s">
+      <div class="stat-number">{{ progress.total_score }}</div>
+      <div class="stat-label">Баллов набрано</div>
+    </div>
+    <div class="stat-card gradient-warning animate-in" style="animation-delay:.1s">
+      <div class="stat-number">{{ progress.level }}</div>
+      <div class="stat-label">Уровень</div>
+    </div>
+    <div class="stat-card gradient-info animate-in" style="animation-delay:.15s">
+      <div class="stat-number">{{ progress.streak_days }}</div>
+      <div class="stat-label">Дней подряд 🔥</div>
+    </div>
+  </div>
+
+  <!-- Прогресс уровня -->
+  <div class="card mb-4 animate-in">
+    <div class="card-body">
+      <div class="flex-between mb-2">
+        <span class="font-semibold">Уровень {{ progress.level }}</span>
+        <span class="text-muted text-sm">{{ progress.current_xp }}/{{ progress.next_level_xp }} XP</span>
+      </div>
+      <div class="progress">
+        <div class="progress-bar" style="width:{{ progress.level_progress }}%"></div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Быстрые действия -->
+  <div class="grid-3 mb-4">
+    <a href="{% url 'theory_list' %}" class="card card-hover animate-in" style="text-decoration:none;animation-delay:.05s">
+      <div class="card-body" style="text-align:center;padding:2rem 1rem">
+        <div style="font-size:2.5rem;margin-bottom:.75rem">📖</div>
+        <h3 style="margin-bottom:.4rem">Теория</h3>
+        <p class="text-muted text-sm">14 модулей, 27+ уроков</p>
+      </div>
+    </a>
+    <a href="{% url 'work_list' %}" class="card card-hover animate-in" style="text-decoration:none;animation-delay:.1s">
+      <div class="card-body" style="text-align:center;padding:2rem 1rem">
+        <div style="font-size:2.5rem;margin-bottom:.75rem">💻</div>
+        <h3 style="margin-bottom:.4rem">Практика</h3>
+        <p class="text-muted text-sm">15 практических работ</p>
+      </div>
+    </a>
+    <a href="{% url 'quiz_list' %}" class="card card-hover animate-in" style="text-decoration:none;animation-delay:.15s">
+      <div class="card-body" style="text-align:center;padding:2rem 1rem">
+        <div style="font-size:2.5rem;margin-bottom:.75rem">🎯</div>
+        <h3 style="margin-bottom:.4rem">Тесты</h3>
+        <p class="text-muted text-sm">5 тестов для самопроверки</p>
+      </div>
+    </a>
+  </div>
+
+  <!-- Последние практические работы -->
+  {% if highlight_works %}
+  <div class="card animate-in">
+    <div class="card-header">
+      <h3 style="font-size:1rem;margin:0"><i class="fas fa-fire" style="color:var(--warning)"></i> Начни с этих работ</h3>
+      <a href="{% url 'work_list' %}" class="btn btn-ghost btn-sm">Все работы →</a>
+    </div>
+    <div class="card-body" style="padding:0">
+      {% for work in highlight_works %}
+      <a href="{% url 'work_detail' work.id %}" style="display:flex;align-items:center;gap:1rem;padding:1rem 1.4rem;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);transition:background var(--transition)">
+        <div style="width:36px;height:36px;border-radius:var(--radius);background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">{{ work.order }}</div>
+        <div style="flex:1;min-width:0">
+          <div class="font-semibold truncate">{{ work.title }}</div>
+          <div class="text-muted text-sm">{{ work.max_score }} баллов · <span class="diff-{{ work.difficulty }}">{% if work.difficulty == 'easy' %}Лёгкая{% elif work.difficulty == 'medium' %}Средняя{% else %}Сложная{% endif %}</span></div>
+        </div>
+        <i class="fas fa-arrow-right text-muted" style="font-size:.8rem"></i>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% else %}
+<!-- Лендинг для неавторизованных -->
+<div style="background:linear-gradient(135deg,var(--primary) 0%,#8b5cf6 50%,#06b6d4 100%);color:#fff;padding:5rem 2rem;text-align:center">
+  <div style="max-width:700px;margin:0 auto">
+    <div style="font-size:4rem;margin-bottom:1rem">🚀</div>
+    <h1 style="font-size:2.75rem;font-weight:800;margin-bottom:1rem;color:#fff">AlgorithmMaster</h1>
+    <p style="font-size:1.2rem;opacity:.9;margin-bottom:2.5rem;line-height:1.7">
+      Платформа для изучения основ программирования и алгоритмов.<br>
+      Теория, практика и тесты в одном месте.
+    </p>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+      <a href="{% url 'register' %}" style="background:#fff;color:var(--primary);padding:.85rem 2.5rem;border-radius:var(--radius-full);font-weight:700;text-decoration:none;font-size:1rem;box-shadow:0 4px 15px rgba(0,0,0,.2)">
+        Начать обучение
+      </a>
+      <a href="{% url 'custom_login' %}" style="background:rgba(255,255,255,.15);color:#fff;border:2px solid rgba(255,255,255,.5);padding:.85rem 2.5rem;border-radius:var(--radius-full);font-weight:700;text-decoration:none;font-size:1rem;backdrop-filter:blur(4px)">
+        Войти
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div style="text-align:center;margin:3rem 0 2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:.5rem">Что включает платформа?</h2>
+    <p class="text-muted">Всё что нужно для освоения ОАИП за один семестр</p>
+  </div>
+  <div class="grid-3">
+    <div class="card animate-in">
+      <div class="card-body" style="text-align:center;padding:2rem">
+        <div style="font-size:2.5rem;margin-bottom:1rem">📖</div>
+        <h3 style="margin-bottom:.5rem">Теория</h3>
+        <p class="text-muted text-sm">14 модулей от переменных до ООП — понятно, структурировано, с примерами кода</p>
+      </div>
+    </div>
+    <div class="card animate-in" style="animation-delay:.05s">
+      <div class="card-body" style="text-align:center;padding:2rem">
+        <div style="font-size:2.5rem;margin-bottom:1rem">💻</div>
+        <h3 style="margin-bottom:.5rem">Практика</h3>
+        <p class="text-muted text-sm">15 задач с встроенным редактором кода и автоматической проверкой</p>
+      </div>
+    </div>
+    <div class="card animate-in" style="animation-delay:.1s">
+      <div class="card-body" style="text-align:center;padding:2rem">
+        <div style="font-size:2.5rem;margin-bottom:1rem">🎯</div>
+        <h3 style="margin-bottom:.5rem">Тесты</h3>
+        <p class="text-muted text-sm">5 квизов с подробным разбором ошибок и объяснением правильных ответов</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

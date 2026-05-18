@@ -1,0 +1,423 @@
+{% extends 'works/base.html' %}
+{% load static %}
+
+{% block title %}Профиль{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'works/css/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+<div style='max-width:200px;margin:1rem auto 0;text-align:right'><a href="{% url 'change_password' %}" class='btn-change-pw'><i class='fas fa-key'></i> Сменить пароль</a></div>
+<style>.btn-change-pw{display:inline-flex;align-items:center;gap:.4rem;background:#f3f4f6;color:#374151;text-decoration:none;padding:.4rem .9rem;border-radius:8px;font-size:.85rem;border:1px solid #e5e7eb}.btn-change-pw:hover{background:#667eea;color:#fff;border-color:#667eea}</style>
+<section class="profile">
+  <div class="profile-header">
+    <div class="user">
+      <div class="avatar" aria-hidden="true">
+        <i class="fas fa-user-circle"></i>
+      </div>
+      <div>
+        <h1 class="name">{{ user_full_name }}</h1>
+        <div class="meta">
+          <span class="username">@{{ request.user.username }}</span>
+          <span class="dot">•</span>
+          <span class="email">{{ request.user.email }}</span>
+          <span class="dot">•</span>
+          <span class="joined">с {{ user_joined|date:'d.m.Y' }}</span>
+      </div>
+      </div>
+    </div>
+
+    <div class="level">
+      <div class="level-badge">{{ progress.level }}</div>
+        <div class="level-info">
+        <div class="bar">
+          <div class="fill" data-width="{{ level_progress_percent }}"></div>
+          </div>
+        <div class="xp">{{ progress.current_xp }} / {{ progress.next_level_xp }} XP</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="card">
+      <div class="label">Общий балл</div>
+      <div class="value">{{ progress.total_score }}</div>
+    </div>
+    <div class="card">
+      <div class="label">Выполнено работ</div>
+      <div class="value">{{ progress.completed_works }} / {{ progress.total_works }}</div>
+    </div>
+    <div class="card">
+      <div class="label">Успешность</div>
+      <div class="value">{{ success_rate }}%</div>
+      </div>
+    <div class="card">
+      <div class="label">Серия дней</div>
+      <div class="value">{{ progress.streak_days }}</div>
+      </div>
+    </div>
+
+  <div class="today-activity">
+    <div class="activity-card">
+      <div class="activity-header">
+        <h3><i class="fas fa-clock"></i>Активность за сегодня</h3>
+        <div class="live-indicator">
+          <span class="pulse-dot"></span>
+          <span>В реальном времени</span>
+      </div>
+    </div>
+      <div class="time-display">
+        <div class="time-unit">
+          <span class="time-value" id="today-hours">0</span>
+          <span class="time-label">часов</span>
+        </div>
+        <div class="time-separator">:</div>
+        <div class="time-unit">
+          <span class="time-value" id="today-minutes">0</span>
+          <span class="time-label">минут</span>
+      </div>
+        <div class="time-separator">:</div>
+        <div class="time-unit">
+          <span class="time-value" id="today-seconds">0</span>
+          <span class="time-label">секунд</span>
+      </div>
+    </div>
+      <div class="activity-progress">
+        <div class="progress-bar">
+          <div class="progress-fill" id="today-progress"></div>
+        </div>
+        <div class="progress-text">
+          <span id="today-percentage">0%</span> от рекомендуемого времени (8 часов)
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Активность за 7 дней</h2>
+      </div>
+      <div class="activity">
+        {% if activity_data %}
+        <ul class="activity-bars">
+          {% for day in activity_data %}
+          <li>
+            <div class="bar" data-height="{{ day.height }}" data-tooltip="{{ day.date }} — попыток: {{ day.count }}, время: {{ day.hours }}ч {{ day.minutes }}м"></div>
+            <span class="day">{{ day.date }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="empty">Нет активности</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Последние решения</h2>
+        <a href="{% url 'work_list' %}" class="link">Все работы</a>
+      </div>
+      {% if recent_solutions %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Работа</th>
+            <th>Статус</th>
+            <th>Баллы</th>
+            <th>Дата</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in recent_solutions %}
+          <tr>
+            <td><a href="{% url 'work_detail' s.work.id %}">{{ s.work.title }}</a></td>
+            <td><span class="badge status-{{ s.status }}">{{ s.get_status_display }}</span></td>
+            <td>{{ s.score }}</td>
+            <td>{{ s.submitted_at|date:'d.m.Y H:i' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty">
+        Вы ещё не отправляли решения. <a href="{% url 'work_list' %}">Начать</a>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Прогресс по темам</h2>
+      </div>
+      {% if topics_progress %}
+      <ul class="topics">
+        {% for t in topics_progress %}
+        <li>
+          <span class="topic-name">{{ t.name }}</span>
+          <div class="topic-bar">
+            <div class="topic-fill" data-width="{{ t.progress }}"></div>
+      </div>
+          <span class="topic-val">{{ t.solved }}/{{ t.total }} ({{ t.progress }}%)</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="empty">Нет данных</div>
+      {% endif %}
+      </div>
+    </div>
+
+  <!-- Достижения -->
+  <div class="achievements-section">
+    <div class="panel-header">
+      <h2>🏆 Достижения</h2>
+    </div>
+    {% if user_achievements %}
+    <div class="achievements-grid">
+      {% for ua in user_achievements %}
+      <div class="ach-card earned" title="{{ ua.achievement.description }}">
+        <div class="ach-icon">{{ ua.achievement.icon }}</div>
+        <div class="ach-title">{{ ua.achievement.title }}</div>
+        <div class="ach-date">{{ ua.earned_at|date:"d.m.Y" }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="ach-empty">
+      <p>Пока нет достижений — начни решать задания!</p>
+    </div>
+    {% endif %}
+    {% if all_achievements %}
+    <div class="ach-locked-grid">
+      <h4 class="ach-locked-title">Можно получить:</h4>
+      {% for a in all_achievements %}
+        {% if a.key not in earned_keys %}
+        <div class="ach-card locked" title="{{ a.description }}">
+          <div class="ach-icon" style="filter:grayscale(1);opacity:.5">{{ a.icon }}</div>
+          <div class="ach-title" style="color:#9ca3af">{{ a.title }}</div>
+          <div class="ach-desc">{{ a.description }}</div>
+        </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
+
+<style>
+.achievements-section{margin-top:1.5rem;padding:0 1rem}
+.achievements-section .panel-header{margin-bottom:1rem}
+.achievements-grid,.ach-locked-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.75rem;margin-bottom:1rem}
+.ach-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:.85rem;text-align:center;transition:.15s}
+.ach-card.earned{border-color:#6ee7b7;background:#f0fdf4}
+.ach-card.locked{background:#f9fafb;cursor:default}
+.ach-icon{font-size:1.8rem;margin-bottom:.3rem}
+.ach-title{font-size:.8rem;font-weight:600;color:#374151}
+.ach-date{font-size:.7rem;color:#9ca3af;margin-top:.2rem}
+.ach-desc{font-size:.72rem;color:#9ca3af;margin-top:.2rem}
+.ach-locked-title{font-size:.85rem;color:#6b7280;margin:.75rem 0 .5rem}
+.ach-empty{text-align:center;color:#6b7280;padding:1.5rem;background:#f9fafb;border-radius:10px}
+</style>
+{% block extra_js %}
+<script>
+  (function(){
+    // Анимация прогресс-баров
+    var fills = document.querySelectorAll('.level .fill,[class^="topic-fill"],.topic-fill');
+    for (var i=0;i<fills.length;i++){
+      var el=fills[i];
+      var w=el.getAttribute('data-width');
+      if(w!==null){
+        el.style.width = (parseInt(w,10)||0)+ '%';
+      }
+    }
+    
+    // Анимация столбцов активности
+    var bars = document.querySelectorAll('.activity .bar');
+    for (var j=0;j<bars.length;j++){
+      var b=bars[j];
+      var h=b.getAttribute('data-height');
+      if(h!==null){
+        b.style.height = (parseInt(h,10)||0) + 'px';
+      }
+    }
+    
+    // Обработчики будут добавлены после определения функции
+    
+    // Обновление времени в реальном времени
+    var serverTime = { hours: 0, minutes: 0, seconds: 0, total_seconds: 0 };
+    var localSeconds = 0;
+    
+    var updateTime = function() {
+      fetch('/api/session-time/')
+        .then(function(response) {
+          return response.json();
+        })
+        .then(function(data) {
+          console.log('Получены данные времени:', data); // Отладка
+          if (data.status === 'success') {
+            // Сохраняем серверное время
+            serverTime = {
+              hours: data.hours,
+              minutes: data.minutes,
+              seconds: data.seconds,
+              total_seconds: data.total_seconds
+            };
+            
+            // Сбрасываем локальный счетчик
+            localSeconds = 0;
+            
+            // Обновляем отображение времени
+            document.getElementById('today-hours').textContent = data.hours.toString().padStart(2, '0');
+            document.getElementById('today-minutes').textContent = data.minutes.toString().padStart(2, '0');
+            document.getElementById('today-seconds').textContent = data.seconds.toString().padStart(2, '0');
+            
+            // Обновляем прогресс-бар (8 часов = 100%)
+            var percentage = Math.min((data.total_seconds / (8 * 3600)) * 100, 100);
+            document.getElementById('today-progress').style.width = percentage + '%';
+            document.getElementById('today-percentage').textContent = Math.round(percentage) + '%';
+            
+            console.log('Время обновлено:', data.hours + ':' + data.minutes + ':' + data.seconds); // Отладка
+          } else {
+            console.log('Статус не success:', data.status, data.debug);
+          }
+        })
+        .catch(function(error) {
+          console.log('Ошибка при получении времени:', error);
+        });
+    };
+    
+    // Локальный счетчик для плавного обновления секунд
+    var updateLocalTime = function() {
+      localSeconds++;
+      var totalSeconds = serverTime.total_seconds + localSeconds;
+      var hours = Math.floor(totalSeconds / 3600);
+      var minutes = Math.floor((totalSeconds % 3600) / 60);
+      var seconds = totalSeconds % 60;
+      
+      // Обновляем только секунды для плавности
+      document.getElementById('today-seconds').textContent = seconds.toString().padStart(2, '0');
+      
+      // Обновляем минуты и часы при необходимости
+      if (seconds === 0) {
+        document.getElementById('today-minutes').textContent = minutes.toString().padStart(2, '0');
+        if (minutes === 0 && hours > 0) {
+          document.getElementById('today-hours').textContent = hours.toString().padStart(2, '0');
+        }
+      }
+    };
+    
+    // Обновление данных активности
+    var updateActivityData = function() {
+      fetch('/api/activity-data/')
+        .then(function(response) {
+          return response.json();
+        })
+        .then(function(data) {
+          console.log('Получены данные активности:', data); // Отладка
+          if (data.status === 'success') {
+            // Обновляем график активности
+            var activityBars = document.querySelector('.activity-bars');
+            if (activityBars && data.activity_data) {
+              activityBars.innerHTML = '';
+              
+              data.activity_data.forEach(function(day) {
+                var li = document.createElement('li');
+                li.innerHTML = '<div class="bar" data-height="' + day.height + '" data-tooltip="' + day.date + ' — попыток: ' + day.count + ', время: ' + day.hours + 'ч ' + day.minutes + 'м"></div><span class="day">' + day.date + '</span>';
+                activityBars.appendChild(li);
+                
+                // Анимируем столбец
+                var bar = li.querySelector('.bar');
+                setTimeout(function() {
+                  bar.style.height = day.height + 'px';
+                }, 100);
+              });
+              
+              // Добавляем обработчики событий для новых столбцов
+              addActivityBarHandlers();
+              
+              console.log('График активности обновлен:', data.debug); // Отладка
+            }
+          } else {
+            console.log('Ошибка в данных активности:', data.status);
+          }
+        })
+        .catch(function(error) {
+          console.log('Ошибка при получении данных активности:', error);
+        });
+    };
+    
+    // Добавляем обработчики событий для столбцов активности
+    var addActivityBarHandlers = function() {
+      var activityBars = document.querySelectorAll('.activity-bars .bar');
+      activityBars.forEach(function(bar) {
+        bar.addEventListener('mouseenter', function() {
+          // Показываем подсказку при наведении
+          var tooltip = this.getAttribute('data-tooltip');
+          if (tooltip) {
+            // Создаем элемент подсказки
+            var tooltipEl = document.createElement('div');
+            tooltipEl.className = 'activity-tooltip';
+            tooltipEl.textContent = tooltip;
+            tooltipEl.style.cssText = `
+              position: absolute;
+              top: -40px;
+              left: 50%;
+              transform: translateX(-50%);
+              background: var(--text-primary);
+              color: white;
+              padding: 8px 12px;
+              border-radius: 6px;
+              font-size: 12px;
+              font-weight: 600;
+              white-space: nowrap;
+              z-index: 1000;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+              pointer-events: none;
+            `;
+            
+            // Добавляем подсказку к родительскому элементу
+            this.parentElement.style.position = 'relative';
+            this.parentElement.appendChild(tooltipEl);
+          }
+        });
+        
+        bar.addEventListener('mouseleave', function() {
+          // Удаляем подсказку при уходе мыши
+          var tooltip = this.parentElement.querySelector('.activity-tooltip');
+          if (tooltip) {
+            tooltip.remove();
+          }
+        });
+      });
+    };
+    
+    // Обновляем время с сервера каждые 5 секунд
+    updateTime(); // Первоначальная загрузка
+    setInterval(updateTime, 5000);
+    
+    // Обновляем секунды локально каждую секунду для плавности
+    setInterval(updateLocalTime, 1000);
+    
+    // Обновляем данные активности каждые 10 секунд (синхронизация с временем)
+    updateActivityData(); // Первоначальная загрузка
+    setInterval(updateActivityData, 10000);
+    
+    // Добавляем обработчики событий для столбцов активности (первоначальная загрузка)
+    addActivityBarHandlers();
+    
+  })();
+</script>
+{% endblock %}
+    // Обновляем данные активности каждые 10 секунд (синхронизация с временем)
+    updateActivityData(); // Первоначальная загрузка
+    setInterval(updateActivityData, 10000);
+    
+    // Добавляем обработчики событий для столбцов активности (первоначальная загрузка)
+    addActivityBarHandlers();
+    
+  })();
+</script>

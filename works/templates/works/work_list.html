@@ -1,0 +1,56 @@
+{% extends 'works/base.html' %}
+{% block title %}Практические работы — AlgorithmMaster{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-code"></i> Практические работы</h1>
+      <p class="page-subtitle">Закрепляй знания — пиши код, сдавай задачи</p>
+    </div>
+    <a href="{% url 'leaderboard' %}" class="btn btn-ghost"><i class="fas fa-trophy"></i> Рейтинг</a>
+  </div>
+
+  <!-- Фильтры -->
+  <div class="filter-bar">
+    <a href="?" class="chip {% if not request.GET.difficulty and not request.GET.topic %}active{% endif %}">Все</a>
+    <a href="?difficulty=easy"   class="chip {% if difficulty == 'easy' %}active{% endif %}">🟢 Лёгкие</a>
+    <a href="?difficulty=medium" class="chip {% if difficulty == 'medium' %}active{% endif %}">🟡 Средние</a>
+    <a href="?difficulty=hard"   class="chip {% if difficulty == 'hard' %}active{% endif %}">🔴 Сложные</a>
+    <span style="color:var(--border)">|</span>
+    <a href="?topic=sorting"   class="chip {% if topic == 'sorting' %}active{% endif %}">Сортировка</a>
+    <a href="?topic=search"    class="chip {% if topic == 'search' %}active{% endif %}">Поиск</a>
+    <a href="?topic=recursion" class="chip {% if topic == 'recursion' %}active{% endif %}">Рекурсия</a>
+    <a href="?topic=data_structures" class="chip {% if topic == 'data_structures' %}active{% endif %}">Структуры</a>
+  </div>
+
+  <div class="grid-auto">
+    {% for work in works %}
+    <a href="{% url 'work_detail' work.id %}" class="card card-hover animate-in" style="text-decoration:none;animation-delay:{{ forloop.counter0 }}0ms">
+      <div class="card-body">
+        <div class="flex-between mb-2">
+          <span class="badge badge-neutral">ПР №{{ work.order }}</span>
+          <span class="diff-{{ work.difficulty }}">
+            {% if work.difficulty == 'easy' %}⬤ Лёгкая{% elif work.difficulty == 'medium' %}⬤ Средняя{% else %}⬤ Сложная{% endif %}
+          </span>
+        </div>
+        <h3 style="font-size:1rem;margin-bottom:.5rem;color:var(--text)">{{ work.title }}</h3>
+        <p class="text-muted text-sm" style="margin-bottom:1rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">
+          {{ work.description|striptags|truncatechars:100 }}
+        </p>
+        <div class="flex-between">
+          <span class="text-muted text-xs"><i class="fas fa-star" style="color:var(--warning)"></i> {{ work.max_score }} баллов</span>
+          
+          <span class="badge badge-primary"><i class="fab fa-python"></i> Python</span>
+        </div>
+      </div>
+    </a>
+    {% empty %}
+    <div class="empty-state" style="grid-column:1/-1">
+      <i class="fas fa-inbox empty-icon"></i>
+      <h3>Практических работ нет</h3>
+      <p>Запустите: <code>python manage.py seed_works</code></p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

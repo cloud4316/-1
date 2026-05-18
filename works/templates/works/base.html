@@ -1,0 +1,413 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AlgorithmMaster - Платформа для изучения алгоритмов{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'works/css/design-system.css' %}">
+    <link rel="stylesheet" href="{% static 'works/css/main.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+
+
+    <style id="dark-style"></style>
+    <style>
+    :root {
+      --bg: #f8fafc; --card: #ffffff; --text: #1f2937;
+      --border: #e5e7eb; --muted: #6b7280;
+    }
+    body.dark-mode {
+      --bg: #0f172a; --card: #1e293b; --text: #e2e8f0;
+      --border: #334155; --muted: #94a3b8;
+    }
+    body.dark-mode { background: var(--bg); color: var(--text); }
+    body.dark-mode .nav-bar,
+    body.dark-mode .nav-dropdown-menu { background: #1e293b; border-color: #334155; }
+    body.dark-mode .module-card,
+    body.dark-mode .quiz-card,
+    body.dark-mode .review-card,
+    body.dark-mode .question-card,
+    body.dark-mode .auth-card,
+    body.dark-mode .lesson-sidebar,
+    body.dark-mode .ts-table-wrap,
+    body.dark-mode .gb-table-wrap,
+    body.dark-mode .lb-table-wrap,
+    body.dark-mode .ap-table-wrap { background: #1e293b; border-color: #334155; }
+    body.dark-mode .form-input,
+    body.dark-mode .ts-filters select,
+    body.dark-mode .ap-search { background: #0f172a; color: #e2e8f0; border-color: #334155; }
+    body.dark-mode .lb-table th,
+    body.dark-mode .gb-table th,
+    body.dark-mode .ts-table th,
+    body.dark-mode .ap-table th { background: #1e293b; color: #94a3b8; border-color: #334155; }
+    body.dark-mode .lb-table td,
+    body.dark-mode .gb-table td,
+    body.dark-mode .ts-table td,
+    body.dark-mode .ap-table td { border-color: #1e293b; }
+    body.dark-mode .lb-table tr:hover td,
+    body.dark-mode .gb-table tr:hover td { background: #263148; }
+    body.dark-mode h1,h2,h3 { color: #e2e8f0; }
+    /* Bell */
+    .nav-bell { position: relative; }
+    .bell-count {
+      position: absolute; top: 2px; right: -2px;
+      background: #ef4444; color: #fff;
+      font-size: .65rem; font-weight: 700;
+      min-width: 16px; height: 16px;
+      border-radius: 10px; display: flex;
+      align-items: center; justify-content: center;
+      padding: 0 3px;
+    }
+    /* Dark toggle */
+    .nav-dark-toggle {
+      background: none; cursor: pointer;
+      display: flex; align-items: center; gap: .3rem;
+      font-size: .9rem; color: inherit;
+    }
+    /* Teacher dropdown */
+    .nav-dropdown { position: relative; }
+    .nav-dropdown-menu {
+      display: none; position: absolute; top: 100%; right: 0;
+      background: #fff; border: 1px solid #e5e7eb;
+      border-radius: 10px; min-width: 180px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.1); z-index: 100;
+      padding: .4rem 0;
+    }
+    .nav-dropdown-menu a {
+      display: flex; align-items: center; gap: .6rem;
+      padding: .5rem 1rem; color: #374151; text-decoration: none;
+      font-size: .88rem;
+    }
+    .nav-dropdown-menu a:hover { background: #f3f4f6; }
+    .nav-dropdown:hover .nav-dropdown-menu { display: block; }
+    </style>
+    {% block extra_head %}{% endblock %}
+
+<script>
+(function() {
+    'use strict';
+
+    // ── 1. Блокируем горячие клавиши ───────────────────────────────────────
+    document.addEventListener('keydown', function(e) {
+        // F12
+        if (e.keyCode === 123) { e.preventDefault(); return false; }
+        // Ctrl+U (просмотр исходника)
+        if (e.ctrlKey && e.keyCode === 85) { e.preventDefault(); return false; }
+        // Ctrl+Shift+I (DevTools)
+        if (e.ctrlKey && e.shiftKey && e.keyCode === 73) { e.preventDefault(); return false; }
+        // Ctrl+Shift+J (Console)
+        if (e.ctrlKey && e.shiftKey && e.keyCode === 74) { e.preventDefault(); return false; }
+        // Ctrl+Shift+C (Inspector)
+        if (e.ctrlKey && e.shiftKey && e.keyCode === 67) { e.preventDefault(); return false; }
+        // Ctrl+S (сохранить страницу)
+        if (e.ctrlKey && e.keyCode === 83) { e.preventDefault(); return false; }
+        // Ctrl+A (выделить всё) — опционально
+        // if (e.ctrlKey && e.keyCode === 65) { e.preventDefault(); return false; }
+    }, true);
+
+    // ── 2. Блокируем правую кнопку мыши ────────────────────────────────────
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        return false;
+    });
+
+    // ── 3. Определяем открытие DevTools по размеру окна ────────────────────
+    var devtoolsOpen = false;
+    var threshold = 160;
+
+    function checkDevTools() {
+        var widthDiff  = window.outerWidth  - window.innerWidth;
+        var heightDiff = window.outerHeight - window.innerHeight;
+        var isOpen     = widthDiff > threshold || heightDiff > threshold;
+
+        if (isOpen && !devtoolsOpen) {
+            devtoolsOpen = true;
+            onDevToolsOpen();
+        } else if (!isOpen && devtoolsOpen) {
+            devtoolsOpen = false;
+        }
+    }
+
+    function onDevToolsOpen() {
+        // Показываем предупреждение
+        document.body.innerHTML = [
+            '<div style="',
+            'position:fixed;inset:0;background:#0f172a;',
+            'display:flex;flex-direction:column;align-items:center;justify-content:center;',
+            'font-family:sans-serif;color:#e2e8f0;z-index:99999;">',
+            '<div style="font-size:4rem;margin-bottom:1rem">🚫</div>',
+            '<h1 style="font-size:2rem;margin-bottom:.5rem">Доступ закрыт</h1>',
+            '<p style="color:#94a3b8;font-size:1.1rem">Инструменты разработчика не разрешены</p>',
+            '<p style="color:#64748b;font-size:.9rem;margin-top:.5rem">',
+            'Закройте DevTools и перезагрузите страницу</p>',
+            '</div>'
+        ].join('');
+    }
+
+    // ── 4. Антиотладка через debugger ──────────────────────────────────────
+    // Замедляет работу DevTools Console
+    function antiDebug() {
+        (function() {
+            var start = Date.now();
+            debugger;
+            if (Date.now() - start > 100) {
+                onDevToolsOpen();
+            }
+        })();
+    }
+
+    // ── 5. Запуск проверок ─────────────────────────────────────────────────
+    setInterval(checkDevTools, 1000);
+    setInterval(antiDebug,     3000);
+
+    // ── 6. Блокируем print (Ctrl+P) ─────────────────────────────────────────
+    window.addEventListener('beforeprint', function(e) {
+        e.stopPropagation();
+        return false;
+    });
+
+})();
+</script>
+<style>
+    /* Запрещаем выделение текста (усложняет копирование) */
+    .no-select {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+</style>
+
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <i class="fas fa-code"></i>
+                    <span>AlgorithmMaster</span>
+                </div>
+
+                <button id="nav-burger"><i class="fas fa-bars"></i></button>
+                <div id="nav-menu-mobile" class="nav-menu">
+                    <a href="{% url 'home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                        <i class="fas fa-home"></i>Главная
+                    </a>
+                    <a href="{% url 'theory_list' %}" class="nav-link {% if 'theory' in request.path %}active{% endif %}">
+                        <i class="fas fa-book-open"></i>Теория
+                    </a>
+                    <a href="{% url 'theory_search' %}" class="nav-link {% if 'theory/search' in request.path %}active{% endif %}" title="Поиск по теории">
+                        <i class="fas fa-search"></i>
+                    </a>
+                    <a href="{% url 'work_list' %}" class="nav-link {% if 'works' in request.path %}active{% endif %}">
+                        <i class="fas fa-code"></i>Практика
+                    </a>
+                    <a href="{% url 'quiz_list' %}" class="nav-link {% if 'quiz' in request.path %}active{% endif %}">
+                        <i class="fas fa-tasks"></i>Тесты
+                    </a>
+
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'leaderboard' %}" class="nav-link {% if 'leaderboard' in request.path %}active{% endif %}" title="Рейтинг">
+                        <i class="fas fa-trophy"></i>Рейтинг
+                    </a>
+
+                    <a href="{% url 'notifications' %}" class="nav-link nav-bell {% if 'notifications' in request.path %}active{% endif %}" title="Уведомления" id="bellLink">
+                        <i class="fas fa-bell"></i><span class="bell-count" id="bellCount" style="display:none">0</span>
+                    </a>
+                    <button class="nav-link nav-dark-toggle" id="darkToggle" title="Тёмная тема" onclick="toggleDark()">
+                        <i class="fas fa-moon" id="darkIcon"></i>
+                    </button>
+                    {% if user.is_staff %}
+                    <div class="nav-dropdown">
+                        <a href="{% url 'admin_panel' %}" class="nav-link nav-teacher {% if 'teacher' in request.path %}active{% endif %}">
+                            <i class="fas fa-chalkboard-teacher"></i>Кабинет <i class="fas fa-caret-down" style="font-size:.7rem"></i>
+                        </a>
+                        <div class="nav-dropdown-menu">
+                            <a href="{% url 'admin_panel' %}"><i class="fas fa-users"></i> Студенты</a>
+                            <a href="{% url 'gradebook' %}"><i class="fas fa-book-open"></i> Журнал</a>
+                            <a href="{% url 'teacher_solutions' %}"><i class="fas fa-file-code"></i> Решения</a>
+                            <a href="{% url 'teacher_analytics' %}"><i class="fas fa-chart-bar"></i> Аналитика</a>
+                            <a href="{% url 'export_gradebook_excel' %}"><i class="fas fa-file-excel" style="color:#1d6f42"></i> Excel</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="nav-dropdown">
+                        <a href="{% url 'profile' %}" class="nav-link">
+                            <i class="fas fa-user-circle"></i>{{ user.last_name }} {{ user.first_name }}
+                            <i class="fas fa-caret-down" style="font-size:.7rem"></i>
+                        </a>
+                        <div class="nav-dropdown-menu">
+                            <a href="{% url 'profile' %}"><i class="fas fa-user"></i> Профиль</a>
+                            <a href="{% url 'change_password' %}"><i class="fas fa-key"></i> Сменить пароль</a>
+                            <a href="#" onclick="event.preventDefault();document.getElementById('logout-form').submit()" style="color:#ef4444"><i class="fas fa-sign-out-alt"></i> Выйти</a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <a href="{% url 'custom_login' %}" class="nav-link">
+                        <i class="fas fa-sign-in-alt"></i>Вход
+                    </a>
+                    <a href="{% url 'register' %}" class="nav-link nav-register">
+                        <i class="fas fa-user-plus"></i>Регистрация
+                    </a>
+                    {% endif %}
+                </div>
+
+                <div class="nav-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <form id="logout-form" action="{% url 'logout' %}" method="post" style="display:none;">
+        {% csrf_token %}
+    </form>
+
+    <div class="messages">
+        {% if messages %}
+            <ul class="messages-list">
+                {% for message in messages %}
+                    <li class="message {{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+
+    <!-- Main Content -->
+    <main class="main">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>AlgorithmMaster</h3>
+                <p>Платформа для изучения основ алгоритмизации и программирования</p>
+            </div>
+            <div class="footer-section">
+                <h4>Быстрые ссылки</h4>
+                <a href="{% url 'home' %}">Главная</a>
+                <a href="{% url 'work_list' %}">Практические работы</a>
+                <a href="#">О проекте</a>
+            </div>
+            <div class="footer-section">
+                <h4>Контакты</h4>
+                <p>Email: support@algorithmmaster.ru</p>
+                <p>Телефон: +7 (XXX) XXX-XX-XX</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 AlgorithmMaster. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script src="{% static 'works/js/main.js' %}"></script>
+    <script src="{% static 'works/js/animation.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+
+<script>
+// ── Тёмная тема ─────────────────────────────────────────────────────────────
+function toggleDark() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  localStorage.setItem('darkMode', isDark ? '1' : '0');
+  document.getElementById('darkIcon').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+}
+(function(){
+  if (localStorage.getItem('darkMode') === '1') {
+    document.body.classList.add('dark-mode');
+    const icon = document.getElementById('darkIcon');
+    if (icon) icon.className = 'fas fa-sun';
+  }
+})();
+
+// ── Колокольчик уведомлений ─────────────────────────────────────────────────
+{% if user.is_authenticated %}
+function fetchBellCount() {
+  fetch('/notifications/count/')
+    .then(r => r.json())
+    .then(data => {
+      const el = document.getElementById('bellCount');
+      if (!el) return;
+      if (data.count > 0) {
+        el.textContent = data.count > 99 ? '99+' : data.count;
+        el.style.display = 'flex';
+      } else {
+        el.style.display = 'none';
+      }
+    }).catch(() => {});
+}
+fetchBellCount();
+setInterval(fetchBellCount, 60000);
+{% endif %}
+</script>
+
+
+<script>
+// Мобильное меню
+document.addEventListener('DOMContentLoaded', function() {
+    const burger = document.getElementById('nav-burger');
+    const menu   = document.getElementById('nav-menu-mobile');
+    if (burger && menu) {
+        burger.addEventListener('click', () => {
+            menu.classList.toggle('open');
+            burger.innerHTML = menu.classList.contains('open')
+                ? '<i class="fas fa-times"></i>'
+                : '<i class="fas fa-bars"></i>';
+        });
+    }
+});
+</script>
+<style>
+#nav-burger { display:none; background:none; border:none; color:inherit; font-size:1.2rem; cursor:pointer; padding:.3rem; }
+@media(max-width:768px) {
+    #nav-burger { display:flex; align-items:center; }
+    .nav-menu { display:none; position:absolute; top:60px; left:0; right:0; background:#fff; border-bottom:1px solid #e5e7eb; flex-direction:column; padding:.5rem; z-index:200; box-shadow:0 4px 12px rgba(0,0,0,.1); }
+    .nav-menu.open { display:flex; }
+    .dark-mode .nav-menu { background:#1e293b; }
+    .nav-dropdown-menu { position:static; box-shadow:none; }
+}
+</style>
+
+<script>
+(function(){
+  document.addEventListener('keydown', function(e){
+    var ctrl = e.ctrlKey || e.metaKey;
+    if(!ctrl) return;
+    var key = e.key ? e.key.toLowerCase() : String.fromCharCode(e.keyCode).toLowerCase();
+    // Запрещаем: Ctrl+P (печать), Ctrl+S (сохранить), Ctrl+U (исходный код)
+    if(key === 'p' || key === 's' || key === 'u'){
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
+  });
+  // Блокируем диалог печати через beforeprint
+  window.addEventListener('beforeprint', function(e){ e.preventDefault(); });
+})();
+</script>
+
+{% if debug %}
+<script>
+(function(){
+  var last = null;
+  function poll(){
+    fetch('/dev-reload/')
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(last === null){ last = d.mtime; }
+        else if(d.mtime !== last){ window.location.reload(); }
+      })
+      .catch(function(){})
+      .finally(function(){ setTimeout(poll, 1500); });
+  }
+  poll();
+})();
+</script>
+{% endif %}
+</body>
+</html>

@@ -1,0 +1,303 @@
+[
+  {
+    "title": "Введение в программирование",
+    "icon": "fas fa-rocket",
+    "order": 1,
+    "description": "Что такое алгоритм, программа и язык Python. Первые шаги.",
+    "lessons": [
+      {
+        "title": "Что такое программирование и алгоритм",
+        "order": 1,
+        "estimated_minutes": 45,
+        "content": "<h2>Что такое программирование?</h2><p><strong>Программирование</strong> — процесс создания программ. Компьютер точно выполняет только то, что ему сказано.</p><h3>Алгоритм</h3><p><strong>Алгоритм</strong> — конечная последовательность чётко определённых шагов для решения задачи.</p><p><strong>Свойства алгоритма:</strong></p><ul><li><strong>Дискретность</strong> — разбит на отдельные шаги</li><li><strong>Определённость</strong> — каждый шаг однозначен</li><li><strong>Конечность</strong> — завершается за конечное число шагов</li><li><strong>Результативность</strong> — даёт результат</li><li><strong>Массовость</strong> — применим к классу задач</li></ul><h3>Виды алгоритмов</h3><ul><li><strong>Линейный</strong> — шаги по порядку</li><li><strong>Разветвляющийся</strong> — содержит условие</li><li><strong>Циклический</strong> — шаги повторяются</li></ul><div class='tip'>Python занимает первое место в индексе TIOBE как самый популярный язык с 2021 года.</div>",
+        "code_example": "# Ваша первая программа\nprint('Привет, мир!')\n\n# Алгоритм: площадь прямоугольника\nlength = 5\nwidth = 3\narea = length * width\nprint('Площадь:', area)"
+      },
+      {
+        "title": "Установка Python и первая программа",
+        "order": 2,
+        "estimated_minutes": 45,
+        "content": "<h2>Установка Python</h2><ol><li>Перейди на <strong>python.org</strong></li><li>Скачай Python 3.11+</li><li><strong>Обязательно</strong> отметь «Add Python to PATH»</li></ol><h3>Среды разработки (IDE)</h3><table class='theory-table'><tr><th>IDE</th><th>Для кого</th></tr><tr><td>IDLE</td><td>Начинающие</td></tr><tr><td>Thonny</td><td>Начинающие</td></tr><tr><td>VS Code</td><td>Все уровни</td></tr><tr><td>PyCharm</td><td>Продвинутые</td></tr></table><h3>Комментарии</h3><p><code>#</code> — однострочный. Тройные кавычки — многострочный.</p>",
+        "code_example": "# Комментарий\nprint('Привет!')\nprint(42)\nprint(3.14)\n\n# f-строки\nname = 'Анна'\nage = 20\nprint(f'Имя: {name}, Возраст: {age}')"
+      }
+    ]
+  },
+  {
+    "title": "Переменные и типы данных",
+    "icon": "fas fa-database",
+    "order": 2,
+    "description": "Хранение информации в программе. Числа, строки, булевы значения.",
+    "lessons": [
+      {
+        "title": "Переменные и операторы присваивания",
+        "order": 1,
+        "estimated_minutes": 45,
+        "content": "<h2>Переменные</h2><p>Переменная — именованная ячейка памяти. Создаётся при первом присваивании.</p><h3>Правила именования</h3><ul><li>Буквы, цифры, символ <code>_</code></li><li>Нельзя начинать с цифры</li><li>Нельзя использовать ключевые слова</li><li>Регистр важен</li></ul><h3>Динамическая типизация</h3><p>Python определяет тип <em>автоматически</em> по значению.</p>",
+        "code_example": "name = 'Иван Петров'\nage = 20\ngpa = 4.5\nis_enrolled = True\n\n# Множественное присваивание\nx = y = z = 0\na, b, c = 1, 2, 3\n\n# Обмен\na, b = b, a\nprint(a, b)\n\n# type()\nprint(type(42))      # int\nprint(type(3.14))    # float\nprint(type('hi'))    # str\nprint(type(True))    # bool"
+      },
+      {
+        "title": "Числа: int, float и арифметика",
+        "order": 2,
+        "estimated_minutes": 45,
+        "content": "<h2>Числовые типы</h2><h3>int и float</h3><table class='theory-table'><tr><th>Оператор</th><th>Операция</th><th>Пример</th><th>Результат</th></tr><tr><td>+</td><td>Сложение</td><td>7+3</td><td>10</td></tr><tr><td>-</td><td>Вычитание</td><td>7-3</td><td>4</td></tr><tr><td>*</td><td>Умножение</td><td>7*3</td><td>21</td></tr><tr><td>/</td><td>Деление</td><td>7/2</td><td>3.5</td></tr><tr><td>//</td><td>Целочисленное</td><td>7//2</td><td>3</td></tr><tr><td>%</td><td>Остаток</td><td>7%2</td><td>1</td></tr><tr><td>**</td><td>Степень</td><td>2**10</td><td>1024</td></tr></table><div class='warning'>10/0 вызывает ZeroDivisionError!</div>",
+        "code_example": "print(10 + 3)   # 13\nprint(10 // 3)  # 3\nprint(10 % 3)   # 1\nprint(2 ** 8)   # 256\nprint(abs(-99))\nprint(round(3.14159, 2))\nx = int(3.9)   # 3\ny = float(5)   # 5.0\nprint(x, y)"
+      },
+      {
+        "title": "Строки и функция input()",
+        "order": 3,
+        "estimated_minutes": 45,
+        "content": "<h2>Строки (str)</h2><p>Неизменяемая последовательность символов.</p><table class='theory-table'><tr><th>Метод</th><th>Описание</th></tr><tr><td>.upper()</td><td>В верхний регистр</td></tr><tr><td>.lower()</td><td>В нижний регистр</td></tr><tr><td>.strip()</td><td>Убрать пробелы</td></tr><tr><td>.split()</td><td>Разделить на список</td></tr><tr><td>.replace()</td><td>Заменить</td></tr><tr><td>.find()</td><td>Найти индекс</td></tr></table><h3>Функция input()</h3><p><code>input()</code> возвращает СТРОКУ. Для чисел нужно явное преобразование.</p><div class='warning'>input() всегда возвращает str!</div>",
+        "code_example": "s = 'Hello, World!'\nprint(s.upper())\nprint(s.lower())\nprint(s.replace('World', 'Python'))\nprint('a,b,c'.split(','))\n\n# f-строки\nname = 'Мария'\nscore = 95.5\nprint(f'Студент: {name}, Балл: {score:.1f}')\n\n# Ввод\nage = int(input('Возраст: '))\nprint(f'Через 10 лет: {age + 10}')"
+      },
+      {
+        "title": "Булевы значения и логические операторы",
+        "order": 4,
+        "estimated_minutes": 45,
+        "content": "<h2>Булевы значения (bool)</h2><p>Только True и False. Операторы сравнения: ==, !=, &gt;, &lt;, &gt;=, &lt;=, in, is.</p><table class='theory-table'><tr><th>A</th><th>B</th><th>A and B</th><th>A or B</th><th>not A</th></tr><tr><td>True</td><td>True</td><td>True</td><td>True</td><td>False</td></tr><tr><td>True</td><td>False</td><td>False</td><td>True</td><td>False</td></tr><tr><td>False</td><td>False</td><td>False</td><td>False</td><td>True</td></tr></table><h3>Ложные значения</h3><p>False, 0, 0.0, пустые строки/списки/словари, None.</p>",
+        "code_example": "print(5 == 5)    # True\nprint(5 != 3)    # True\nprint('py' in 'python')  # True\nprint(3 in [1,2,3])      # True\n\nage = 20\nhas_id = True\nprint(age >= 18 and has_id)  # True\nprint(not has_id)             # False\n\n# Цепочки сравнений\nx = 5\nprint(1 < x < 10)   # True"
+      },
+      {
+        "title": "⚡ Ловушки и нюансы Python",
+        "order": 99,
+        "estimated_minutes": 30,
+        "content": "<h2>⚡ Ловушки Python которые удивляют всех</h2>\n\n<h3>1. Изменяемые объекты как аргументы по умолчанию</h3>\n<p>Одна из самых коварных ловушек Python — использование изменяемых объектов (списков, словарей) как значений по умолчанию в функциях.</p>\n<div class=\"warning\">⚠️ Аргумент по умолчанию создаётся ОДИН РАЗ при определении функции, а не при каждом вызове!</div>\n\n<h3>2. Целочисленный кэш Python</h3>\n<p>Python кэширует маленькие целые числа (от -5 до 256). Для них оператор <code>is</code> работает как <code>==</code>. Для больших чисел — нет!</p>\n<div class=\"tip\">💡 Всегда используйте <code>==</code> для сравнения значений, <code>is</code> только для сравнения с <code>None</code>, <code>True</code>, <code>False</code>.</div>\n\n<h3>3. Мутабельность vs иммутабельность</h3>\n<p><strong>Неизменяемые (immutable):</strong> int, float, str, tuple, frozenset — нельзя изменить</p>\n<p><strong>Изменяемые (mutable):</strong> list, dict, set — можно изменить на месте</p>\n<p>Это важно при передаче в функции — изменяемые объекты передаются по ссылке!</p>\n\n<h3>4. Деление и округление</h3>\n<p>Python 3: <code>7 / 2 = 3.5</code> (всегда float). Python 2 было иначе! Часто путают новички из других языков.</p>\n<p>Также: <code>round(0.5) = 0</code>, <code>round(1.5) = 2</code> — банковское округление (к чётному).</p>\n\n<h3>5. Сравнение списков и словарей</h3>\n<p>Python умеет сравнивать сложные структуры через <code>==</code>. Но это глубокое сравнение — медленно для больших данных.</p>\n\n<h3>6. Немного магии: <code>__dunder__</code> методы</h3>\n<p>Python позволяет перегружать операторы через специальные методы: <code>__len__</code>, <code>__str__</code>, <code>__add__</code>, <code>__eq__</code>. Это и есть «магия» классов.</p>",
+        "code_example": "# ЛОВУШКА 1: Изменяемый аргумент по умолчанию\ndef add_item(item, lst=[]):   # ПЛОХО!\n    lst.append(item)\n    return lst\n\nprint(add_item(1))   # [1]\nprint(add_item(2))   # [1, 2]  ← список накапливается!\nprint(add_item(3))   # [1, 2, 3] ← WTF?\n\ndef add_item_fixed(item, lst=None):  # ХОРОШО\n    if lst is None:\n        lst = []\n    lst.append(item)\n    return lst\n\n# ЛОВУШКА 2: Кэш целых чисел\na = 256; b = 256\nprint(a is b)   # True  (кэшировано)\n\na = 257; b = 257\nprint(a is b)   # False (не кэшировано!)\nprint(a == b)   # True  (ВСЕГДА используй ==)\n\n# ЛОВУШКА 3: Мутабельность\ndef modify(lst):\n    lst.append(99)\n\noriginal = [1, 2, 3]\nmodify(original)\nprint(original)   # [1, 2, 3, 99]  ← список изменился!\n\n# ЛОВУШКА 4: Округление\nprint(round(0.5))   # 0 — не 1!\nprint(round(1.5))   # 2\nprint(round(2.5))   # 2 — банковское округление\n\n# ЛОВУШКА 5: Копирование списков\na = [1, [2, 3], 4]\nb = a.copy()        # поверхностная копия\nb[1].append(99)\nprint(a)   # [1, [2, 3, 99], 4] ← вложенный список изменился!\n\nimport copy\nc = copy.deepcopy(a)  # глубокая копия — безопасно"
+      }
+    ]
+  },
+  {
+    "title": "Условные операторы",
+    "icon": "fas fa-code-branch",
+    "order": 3,
+    "description": "Принятие решений. Операторы if, elif, else.",
+    "lessons": [
+      {
+        "title": "Оператор if-elif-else",
+        "order": 1,
+        "estimated_minutes": 45,
+        "content": "<h2>Условный оператор</h2><pre><code>if условие:\n    блок_если_True\nelif другое_условие:\n    блок_если_второе_True\nelse:\n    блок_если_все_False</code></pre><h3>Отступы — основа синтаксиса Python</h3><p>Используй 4 пробела на каждый уровень.</p><div class='warning'>Нельзя смешивать пробелы и табуляцию!</div><h3>Тернарный оператор</h3><p><code>X if условие else Y</code></p>",
+        "code_example": "score = int(input('Балл (0-100): '))\nif score >= 90:\n    grade = 'Отлично'\nelif score >= 75:\n    grade = 'Хорошо'\nelif score >= 60:\n    grade = 'Удовлетворительно'\nelse:\n    grade = 'Неудовлетворительно'\nprint(f'Оценка: {grade}')\n\n# Тернарный оператор\nage = 20\nstatus = 'совершеннолетний' if age >= 18 else 'несовершеннолетний'\nprint(status)"
+      }
+    ]
+  },
+  {
+    "title": "Цикл while",
+    "icon": "fas fa-sync-alt",
+    "order": 4,
+    "description": "Повторение действий пока выполняется условие.",
+    "lessons": [
+      {
+        "title": "Цикл while — синтаксис и примеры",
+        "order": 1,
+        "estimated_minutes": 45,
+        "content": "<h2>Цикл while</h2><pre><code>while условие:\n    тело_цикла</code></pre><ul><li><code>break</code> — выйти из цикла</li><li><code>continue</code> — пропустить итерацию</li></ul><div class='warning'>Бесконечный цикл зависнет программу! Остановить: Ctrl+C</div>",
+        "code_example": "count = 5\nwhile count > 0:\n    print(count, end=' ')\n    count -= 1\nprint('Пуск!')\n\n# Валидация ввода\nwhile True:\n    age = input('Возраст (1-120): ')\n    if age.isdigit() and 1 <= int(age) <= 120:\n        print(f'Возраст: {int(age)}')\n        break\n    print('Ошибка! Попробуй снова.')"
+      }
+    ]
+  },
+  {
+    "title": "Цикл for и range()",
+    "icon": "fas fa-list-ol",
+    "order": 5,
+    "description": "Перебор последовательностей. range(), enumerate(), zip().",
+    "lessons": [
+      {
+        "title": "Цикл for и функция range()",
+        "order": 1,
+        "estimated_minutes": 45,
+        "content": "<h2>Цикл for</h2><table class='theory-table'><tr><th>Вызов</th><th>Значения</th></tr><tr><td>range(5)</td><td>0,1,2,3,4</td></tr><tr><td>range(1,6)</td><td>1,2,3,4,5</td></tr><tr><td>range(0,10,2)</td><td>0,2,4,6,8</td></tr><tr><td>range(5,0,-1)</td><td>5,4,3,2,1</td></tr></table><h3>enumerate() и zip()</h3><p>enumerate() даёт индекс+значение. zip() — параллельный перебор.</p>",
+        "code_example": "for i in range(5):\n    print(i, end=' ')  # 0 1 2 3 4\nprint()\n\nfor i in range(1,11):\n    print(i, end=' ')\nprint()\n\nsubjects = ['Математика','Физика','Информатика']\nfor i, s in enumerate(subjects, 1):\n    print(f'{i}. {s}')\n\n# Таблица умножения\nfor i in range(1,6):\n    for j in range(1,6):\n        print(f'{i*j:3}', end='')\n    print()"
+      },
+      {
+        "title": "Генераторы списков и встроенные функции",
+        "order": 2,
+        "estimated_minutes": 45,
+        "content": "<h2>Генераторы списков</h2><pre><code>[выражение for x in seq if условие]</code></pre><h2>Встроенные функции</h2><table class='theory-table'><tr><th>Функция</th><th>Описание</th></tr><tr><td>sum()</td><td>Сумма</td></tr><tr><td>min()</td><td>Минимум</td></tr><tr><td>max()</td><td>Максимум</td></tr><tr><td>len()</td><td>Длина</td></tr><tr><td>sorted()</td><td>Отсортированная копия</td></tr><tr><td>any()</td><td>Хотя бы один True</td></tr><tr><td>all()</td><td>Все True</td></tr></table>",
+        "code_example": "nums = [3,1,4,1,5,9,2,6]\nprint(f'Сумма: {sum(nums)}')\nprint(f'Мин: {min(nums)}, Макс: {max(nums)}')\nprint(f'Среднее: {sum(nums)/len(nums):.2f}')\n\n# Генераторы\nsquares = [x**2 for x in range(1,11)]\nprint(squares)\n\nevens = [x for x in range(20) if x % 2 == 0]\nprint(evens)\n\nprint(any(x > 8 for x in nums))  # True\nprint(all(x > 0 for x in nums))  # True"
+      }
+    ]
+  },
+  {
+    "title": "Функции",
+    "icon": "fas fa-cog",
+    "order": 6,
+    "description": "Создание и использование функций. Параметры, return, рекурсия.",
+    "lessons": [
+      {
+        "title": "Определение и вызов функций",
+        "order": 1,
+        "estimated_minutes": 45,
+        "content": "<h2>Функции</h2><pre><code>def имя(параметр1, параметр2=default):\n    '''docstring'''\n    return результат</code></pre><h3>Виды параметров</h3><ul><li>Позиционные</li><li>По умолчанию</li><li>Именованные</li><li>*args, **kwargs</li></ul><p>Без return — возвращает None.</p>",
+        "code_example": "def circle_area(radius):\n    import math\n    return math.pi * radius ** 2\n\nprint(f'Площадь: {circle_area(5):.2f}')\n\ndef power(base, exp=2):\n    return base ** exp\n\nprint(power(3))      # 9\nprint(power(3, 3))   # 27\n\ndef stats(numbers):\n    return min(numbers), max(numbers), sum(numbers)/len(numbers)\n\nlo, hi, avg = stats([4,7,2,9,1])\nprint(f'Мин={lo}, Макс={hi}, Среднее={avg:.1f}')"
+      },
+      {
+        "title": "Область видимости. Рекурсия",
+        "order": 2,
+        "estimated_minutes": 45,
+        "content": "<h2>Рекурсия</h2><p>Функция вызывает сама себя. Обязательно: базовый случай + рекурсивный случай.</p><p>Максимальная глубина в Python: 1000.</p><h3>Мемоизация</h3><p>Декоратор <code>@functools.lru_cache</code> кэширует результаты.</p>",
+        "code_example": "def factorial(n):\n    if n <= 1:\n        return 1\n    return n * factorial(n - 1)\n\nprint(factorial(5))   # 120\nprint(factorial(10))  # 3628800\n\nimport functools\n\n@functools.lru_cache(maxsize=None)\ndef fib(n):\n    if n <= 1: return n\n    return fib(n-1) + fib(n-2)\n\nprint([fib(i) for i in range(10)])\n# [0,1,1,2,3,5,8,13,21,34]"
+      },
+      {
+        "title": "⚡ Функции: продвинутые техники",
+        "order": 99,
+        "estimated_minutes": 30,
+        "content": "<h2>⚡ Продвинутые техники работы с функциями</h2>\n\n<h3>1. Lambda — анонимные функции</h3>\n<p>Короткая функция в одну строку: <code>lambda аргументы: выражение</code>. Удобна для сортировки и передачи в другие функции.</p>\n\n<h3>2. Функции высшего порядка</h3>\n<p>Функции которые принимают другие функции как аргументы или возвращают их.</p>\n<ul>\n  <li><code>map(func, iterable)</code> — применяет функцию к каждому элементу</li>\n  <li><code>filter(func, iterable)</code> — фильтрует элементы по условию</li>\n  <li><code>sorted(iterable, key=func)</code> — сортировка с ключом</li>\n</ul>\n\n<h3>3. Замыкания (Closures)</h3>\n<p>Функция «запоминает» переменные из внешней области видимости даже после того, как внешняя функция завершилась.</p>\n\n<h3>4. Декораторы</h3>\n<p>Функция, которая модифицирует другую функцию. Это и есть <code>@login_required</code>, <code>@lru_cache</code>.</p>\n\n<h3>5. args и kwargs — передача любого количества аргументов</h3>\n<p><code>*args</code> — кортеж позиционных аргументов. <code>**kwargs</code> — словарь именованных.</p>\n\n<h3>6. Исполнение, а не вызов</h3>\n<div class=\"warning\">⚠️ Частая ошибка: <code>sorted(lst, key=len())</code> — тут <code>len()</code> ВЫЗЫВАЕТСЯ сразу. Правильно: <code>key=len</code> — передаём функцию, не результат.</div>",
+        "code_example": "# Lambda\nsquare   = lambda x: x ** 2\nprint(square(5))   # 25\n\n# Сортировка по длине строки\nwords = [\"banana\", \"apple\", \"kiwi\", \"cherry\", \"fig\"]\nprint(sorted(words, key=len))\nprint(sorted(words, key=lambda w: (len(w), w)))  # по длине, потом по алфавиту\n\n# map и filter\nnums    = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]\nsquares = list(map(lambda x: x**2, nums))\nevens   = list(filter(lambda x: x % 2 == 0, nums))\nprint(squares)  # [1, 4, 9, 16, 25, 36, 49, 64, 81, 100]\nprint(evens)    # [2, 4, 6, 8, 10]\n\n# Замыкание\ndef make_multiplier(n):\n    def multiplier(x):\n        return x * n    # n \"запомнена\" из внешней функции\n    return multiplier\n\ntimes3 = make_multiplier(3)\ntimes5 = make_multiplier(5)\nprint(times3(10))  # 30\nprint(times5(10))  # 50\n\n# Декоратор\nimport time\ndef timer(func):\n    from functools import wraps\n    @wraps(func)\n    def wrapper(*args, **kwargs):\n        start  = time.time()\n        result = func(*args, **kwargs)\n        print(f\"{func.__name__}: {time.time()-start:.4f}с\")\n        return result\n    return wrapper\n\n@timer\ndef slow_sum(n):\n    return sum(range(n))\n\nslow_sum(1_000_000)\n\n# *args и **kwargs\ndef flexible(*args, **kwargs):\n    print(\"args:\", args)\n    print(\"kwargs:\", kwargs)\n\nflexible(1, 2, 3, name=\"Анна\", age=20)"
+      }
+    ]
+  },
+  {
+    "title": "Списки и массивы",
+    "icon": "fas fa-th-list",
+    "order": 7,
+    "description": "Хранение наборов данных. Методы, сортировка, матрицы.",
+    "lessons": [
+      {
+        "title": "Списки: создание, методы, сортировка",
+        "order": 1,
+        "estimated_minutes": 45,
+        "content": "<h2>Списки (list)</h2><table class='theory-table'><tr><th>Метод</th><th>Описание</th></tr><tr><td>append(x)</td><td>Добавить в конец</td></tr><tr><td>insert(i,x)</td><td>Вставить на позицию i</td></tr><tr><td>remove(x)</td><td>Удалить первый x</td></tr><tr><td>pop(i)</td><td>Удалить и вернуть</td></tr><tr><td>sort()</td><td>Сортировать на месте</td></tr><tr><td>reverse()</td><td>Перевернуть</td></tr><tr><td>index(x)</td><td>Индекс первого x</td></tr><tr><td>count(x)</td><td>Количество x</td></tr></table>",
+        "code_example": "nums = [3,1,4,1,5,9,2,6]\nprint(nums[0], nums[-1])\nprint(nums[2:5])\n\nfruits = ['банан','яблоко']\nfruits.append('апельсин')\nfruits.insert(0,'груша')\nfruits.remove('банан')\nprint(fruits)\n\nnums.sort()\nprint(nums)\n\noriginal = [3,1,4,1,5]\nordered = sorted(original)   # не изменяет original\nprint(original, ordered)"
+      },
+      {
+        "title": "Двумерные массивы (матрицы)",
+        "order": 2,
+        "estimated_minutes": 45,
+        "content": "<h2>Матрицы</h2><p>Список списков. Доступ: <code>matrix[строка][столбец]</code>.</p><h3>Обход</h3><p>Вложенные циклы for — внешний по строкам, внутренний по столбцам.</p><h3>Операции</h3><ul><li>Главная диагональ: i == j</li><li>Транспонирование: строки и столбцы меняются</li></ul>",
+        "code_example": "matrix = [[1,2,3],[4,5,6],[7,8,9]]\n\nfor row in matrix:\n    print(' '.join(f'{x:3}' for x in row))\n\ndiag = sum(matrix[i][i] for i in range(3))\nprint(f'Диагональ: {diag}')\n\nn = len(matrix)\ntransposed = [[matrix[j][i] for j in range(n)] for i in range(n)]\nprint('Транспонированная:')\nfor row in transposed:\n    print(' '.join(f'{x:3}' for x in row))"
+      }
+    ]
+  },
+  {
+    "title": "Словари и множества",
+    "icon": "fas fa-book",
+    "order": 8,
+    "description": "Словари (ключ-значение) и множества.",
+    "lessons": [
+      {
+        "title": "Словари (dict)",
+        "order": 1,
+        "estimated_minutes": 45,
+        "content": "<h2>Словари (dict)</h2><p>Коллекция пар ключ:значение. Ключи уникальны.</p><table class='theory-table'><tr><th>Операция</th><th>Описание</th></tr><tr><td>d[key]</td><td>Получить (KeyError если нет)</td></tr><tr><td>d.get(key,default)</td><td>Безопасно</td></tr><tr><td>d[key]=val</td><td>Добавить/изменить</td></tr><tr><td>del d[key]</td><td>Удалить</td></tr><tr><td>d.keys()</td><td>Все ключи</td></tr><tr><td>d.values()</td><td>Все значения</td></tr><tr><td>d.items()</td><td>Пары (ключ, значение)</td></tr></table>",
+        "code_example": "student = {'name':'Иван','age':20,'grades':[5,4,5,3]}\nprint(student['name'])\nprint(student.get('email','не указан'))\n\nstudent['age'] = 21\nfor k, v in student.items():\n    print(f'  {k}: {v}')\n\n# Подсчёт частоты\ntext = 'программирование'\nfreq = {}\nfor ch in text:\n    freq[ch] = freq.get(ch, 0) + 1\nprint(freq)\n\n# Сортировка по значению\nscores = {'Анна':95,'Борис':82,'Вера':97}\ntop = sorted(scores.items(), key=lambda x: x[1], reverse=True)\nfor i,(name,s) in enumerate(top,1):\n    print(f'{i}. {name}: {s}')"
+      },
+      {
+        "title": "Множества (set)",
+        "order": 2,
+        "estimated_minutes": 30,
+        "content": "<h2>Множества (set)</h2><p>Неупорядоченная коллекция уникальных элементов. Быстрая проверка вхождения O(1).</p><table class='theory-table'><tr><th>Операция</th><th>Символ</th></tr><tr><td>Объединение</td><td>a | b</td></tr><tr><td>Пересечение</td><td>a &amp; b</td></tr><tr><td>Разность</td><td>a - b</td></tr></table><div class='tip'>Главное применение: удаление дубликатов: list(set(lst))</div>",
+        "code_example": "s1 = {1,2,3,4,5}\ns2 = {3,4,5,6,7}\n\nprint(s1 | s2)   # объединение\nprint(s1 & s2)   # пересечение {3,4,5}\nprint(s1 - s2)   # разность {1,2}\n\n# Удаление дублей\nlst = [1,3,2,1,4,2,3]\nunique = sorted(set(lst))\nprint(unique)  # [1,2,3,4]\n\n# Быстрая проверка\nbig = set(range(1_000_000))\nprint(999_999 in big)  # True, мгновенно"
+      }
+    ]
+  },
+  {
+    "title": "Обработка исключений",
+    "icon": "fas fa-exclamation-triangle",
+    "order": 9,
+    "description": "Что такое исключения и как их обрабатывать. try/except/finally.",
+    "lessons": [
+      {
+        "title": "try-except-finally",
+        "order": 1,
+        "estimated_minutes": 45,
+        "content": "<h2>Исключения</h2><table class='theory-table'><tr><th>Исключение</th><th>Причина</th></tr><tr><td>ZeroDivisionError</td><td>Деление на ноль</td></tr><tr><td>ValueError</td><td>int('abc')</td></tr><tr><td>TypeError</td><td>Несовместимые типы</td></tr><tr><td>IndexError</td><td>Индекс за пределами</td></tr><tr><td>KeyError</td><td>Ключ не найден</td></tr><tr><td>FileNotFoundError</td><td>Файл не найден</td></tr></table><pre><code>try:\n    ...\nexcept ТипОшибки as e:\n    ...\nelse:\n    ...  # если ошибки не было\nfinally:\n    ...  # всегда</code></pre><div class='tip'>Перехватывай конкретные исключения, не голое except!</div>",
+        "code_example": "try:\n    n = int(input('Число: '))\n    result = 100 / n\n    print(f'100/{n} = {result:.2f}')\nexcept ValueError:\n    print('Ошибка: введено не число')\nexcept ZeroDivisionError:\n    print('Ошибка: деление на ноль')\nfinally:\n    print('Готово')\n\n# Безопасный ввод\ndef safe_int(prompt, mn=None, mx=None):\n    while True:\n        try:\n            v = int(input(prompt))\n            if mn is not None and v < mn: raise ValueError(f'>= {mn}')\n            if mx is not None and v > mx: raise ValueError(f'<= {mx}')\n            return v\n        except ValueError as e:\n            print(f'Ошибка: {e}')\n\nage = safe_int('Возраст (1-120): ', 1, 120)\nprint(f'Возраст: {age}')"
+      }
+    ]
+  },
+  {
+    "title": "Работа с файлами",
+    "icon": "fas fa-file-alt",
+    "order": 10,
+    "description": "Чтение и запись текстовых файлов.",
+    "lessons": [
+      {
+        "title": "Чтение и запись файлов",
+        "order": 1,
+        "estimated_minutes": 45,
+        "content": "<h2>Работа с файлами</h2><table class='theory-table'><tr><th>Режим</th><th>Описание</th></tr><tr><td>'r'</td><td>Чтение (по умолчанию)</td></tr><tr><td>'w'</td><td>Запись (перезаписывает)</td></tr><tr><td>'a'</td><td>Дозапись в конец</td></tr></table><pre><code>with open('файл.txt', 'r', encoding='utf-8') as f:\n    content = f.read()</code></pre><p>with гарантирует закрытие файла даже при ошибке.</p>",
+        "code_example": "with open('students.txt','w',encoding='utf-8') as f:\n    f.write('Иванов Иван: 5 4 3 5 4\\n')\n    f.write('Петрова Мария: 5 5 5 4 5\\n')\nprint('Файл записан')\n\nwith open('students.txt','r',encoding='utf-8') as f:\n    for line in f:\n        line = line.strip()\n        if not line: continue\n        name, grades_str = line.split(':')\n        grades = list(map(int, grades_str.split()))\n        avg = sum(grades)/len(grades)\n        print(f'{name.strip():20} ср.балл: {avg:.2f}')\n\ntry:\n    with open('missing.txt') as f:\n        data = f.read()\nexcept FileNotFoundError:\n    print('Файл не найден')"
+      }
+    ]
+  },
+  {
+    "title": "Алгоритмы поиска",
+    "icon": "fas fa-search",
+    "order": 11,
+    "description": "Линейный и бинарный поиск. Сравнение эффективности.",
+    "lessons": [
+      {
+        "title": "Линейный и бинарный поиск",
+        "order": 1,
+        "estimated_minutes": 45,
+        "content": "<h2>Линейный поиск</h2><p>Перебор всех элементов. Сложность O(n). Работает на любом массиве.</p><h2>Бинарный поиск</h2><p>Только для отсортированного массива. Делит пространство поиска пополам. O(log n).</p><table class='theory-table'><tr><th>Алгоритм</th><th>Сложность</th><th>n=1 000 000</th></tr><tr><td>Линейный</td><td>O(n)</td><td>1 000 000 шагов</td></tr><tr><td>Бинарный</td><td>O(log n)</td><td>~20 шагов</td></tr></table>",
+        "code_example": "def linear_search(arr, target):\n    for i, x in enumerate(arr):\n        if x == target:\n            return i\n    return -1\n\ndef binary_search(arr, target):\n    left, right = 0, len(arr)-1\n    steps = 0\n    while left <= right:\n        steps += 1\n        mid = (left+right)//2\n        if arr[mid] == target: return mid, steps\n        elif arr[mid] < target: left = mid+1\n        else: right = mid-1\n    return -1, steps\n\ndata = [1,3,5,7,9,11,13,15,17,19]\nprint(linear_search(data, 13))\nidx, steps = binary_search(data, 13)\nprint(f'Позиция {idx}, шагов: {steps}')"
+      }
+    ]
+  },
+  {
+    "title": "Алгоритмы сортировки",
+    "icon": "fas fa-sort-amount-up",
+    "order": 12,
+    "description": "Пузырьковая, выбором, вставками. Оценка сложности.",
+    "lessons": [
+      {
+        "title": "Пузырьковая сортировка и выбором",
+        "order": 1,
+        "estimated_minutes": 45,
+        "content": "<h2>Сложность алгоритмов (Big-O)</h2><p>O(n) — линейное. O(n^2) — квадратичное. O(n log n) — оптимальное для сортировок.</p><h2>Пузырьковая сортировка</h2><p>Проходим по массиву, меняем соседние неправильные пары. Сложность O(n^2).</p><h2>Сортировка выбором</h2><p>Ищем минимум, ставим на место. O(n^2). Меньше обменов.</p>",
+        "code_example": "def bubble_sort(arr):\n    n = len(arr); swaps = 0\n    for i in range(n):\n        swapped = False\n        for j in range(n-i-1):\n            if arr[j] > arr[j+1]:\n                arr[j], arr[j+1] = arr[j+1], arr[j]\n                swaps += 1; swapped = True\n        if not swapped: break\n    return arr, swaps\n\ndef selection_sort(arr):\n    n = len(arr); swaps = 0\n    for i in range(n):\n        mi = i\n        for j in range(i+1,n):\n            if arr[j] < arr[mi]: mi = j\n        if mi != i:\n            arr[i],arr[mi]=arr[mi],arr[i]; swaps+=1\n    return arr, swaps\n\ndata = [64,34,25,12,22,11,90]\nb,bs = bubble_sort(data.copy())\ns,ss = selection_sort(data.copy())\nprint(f'Пузырьковая: {b}, обменов: {bs}')\nprint(f'Выбором:     {s}, обменов: {ss}')"
+      },
+      {
+        "title": "Сортировка вставками и слиянием",
+        "order": 2,
+        "estimated_minutes": 45,
+        "content": "<h2>Сортировка вставками</h2><p>Вставляем элемент на правильное место в отсортированной части. O(n^2), но O(n) для почти отсортированных.</p><h2>Сортировка слиянием</h2><p>Рекурсивно делит, сортирует, сливает. O(n log n) всегда.</p><table class='theory-table'><tr><th>Алгоритм</th><th>Лучший</th><th>Средний</th><th>Худший</th></tr><tr><td>Пузырьковая</td><td>O(n)</td><td>O(n^2)</td><td>O(n^2)</td></tr><tr><td>Выбором</td><td>O(n^2)</td><td>O(n^2)</td><td>O(n^2)</td></tr><tr><td>Вставками</td><td>O(n)</td><td>O(n^2)</td><td>O(n^2)</td></tr><tr><td>Слиянием</td><td>O(n log n)</td><td>O(n log n)</td><td>O(n log n)</td></tr></table>",
+        "code_example": "def insertion_sort(arr):\n    for i in range(1,len(arr)):\n        key = arr[i]; j = i-1\n        while j >= 0 and arr[j] > key:\n            arr[j+1]=arr[j]; j-=1\n        arr[j+1] = key\n    return arr\n\ndef merge_sort(arr):\n    if len(arr)<=1: return arr\n    mid=len(arr)//2\n    L=merge_sort(arr[:mid]); R=merge_sort(arr[mid:])\n    res=[]; i=j=0\n    while i<len(L) and j<len(R):\n        if L[i]<=R[j]: res.append(L[i]); i+=1\n        else: res.append(R[j]); j+=1\n    return res+L[i:]+R[j:]\n\ndata=[5,3,8,1,9,2,7,4,6]\nprint('Вставками:', insertion_sort(data.copy()))\nprint('Слиянием: ', merge_sort(data.copy()))\nprint('Python:   ', sorted(data))"
+      },
+      {
+        "title": "⚡ Встроенная сортировка Python: секреты Timsort",
+        "order": 99,
+        "estimated_minutes": 25,
+        "content": "<h2>⚡ Timsort — алгоритм сортировки Python</h2>\n<p><strong>Timsort</strong> — гибрид сортировки слиянием и вставками, разработанный Тимом Петерсом специально для Python в 2002 году. Сейчас используется в Java, Android, Swift.</p>\n\n<h3>Почему Timsort быстрее классических алгоритмов?</h3>\n<ul>\n  <li>Обнаруживает уже отсортированные подпоследовательности (<strong>runs</strong>)</li>\n  <li>Для маленьких подмассивов использует вставками O(n) — быстро</li>\n  <li>Для больших — слияние O(n log n) — эффективно</li>\n  <li>Стабильный: равные элементы не меняют порядок</li>\n</ul>\n\n<h3>Скрытые возможности sorted() и sort()</h3>\n<ul>\n  <li><code>reverse=True</code> — сортировка по убыванию</li>\n  <li><code>key=</code> — функция-ключ для сравнения</li>\n  <li>Сортировка по нескольким ключам через кортеж</li>\n  <li><code>sort()</code> изменяет список. <code>sorted()</code> создаёт новый</li>\n</ul>\n\n<h3>Сравнение алгоритмов на практике</h3>\n<table class=\"theory-table\">\n  <tr><th>n элементов</th><th>Пузырьковая O(n²)</th><th>Слияние O(n log n)</th><th>Timsort</th></tr>\n  <tr><td>100</td><td>10,000 операций</td><td>664</td><td>~100 (runs!)</td></tr>\n  <tr><td>10,000</td><td>100,000,000</td><td>133,000</td><td>10,000-50,000</td></tr>\n  <tr><td>1,000,000</td><td>10¹²</td><td>20,000,000</td><td>~1,000,000</td></tr>\n</table>\n\n<div class=\"tip\">💡 В реальном коде ВСЕГДА используй <code>sorted()</code> или <code>list.sort()</code>. Ручные сортировки нужны только для учёбы.</div>",
+        "code_example": "import time, random\n\n# sorted() — мощнее чем кажется\nstudents = [\n    {\"name\": \"Анна\",   \"grade\": 95, \"group\": \"ИТ-21\"},\n    {\"name\": \"Борис\",  \"grade\": 82, \"group\": \"ИТ-22\"},\n    {\"name\": \"Вера\",   \"grade\": 95, \"group\": \"ИТ-21\"},\n    {\"name\": \"Дмитрий\",\"grade\": 88, \"group\": \"ИТ-21\"},\n]\n\n# Сортировка по одному полю\nby_grade = sorted(students, key=lambda s: s[\"grade\"], reverse=True)\nfor s in by_grade:\n    print(f\"{s['name']}: {s['grade']}\")\n\n# Сортировка по нескольким полям: сначала по группе, потом по оценке\nby_group_grade = sorted(students, key=lambda s: (s[\"group\"], -s[\"grade\"]))\nfor s in by_group_grade:\n    print(f\"{s['group']} | {s['name']}: {s['grade']}\")\n\n# Timsort vs пузырьковая — замер скорости\nn = 10_000\ndata = [random.randint(1, n) for _ in range(n)]\n\n# Почти отсортированный массив — Timsort особенно быстр!\nnearly_sorted = list(range(n))\nfor _ in range(n // 100):   # 1% случайных перестановок\n    i, j = random.randint(0, n-1), random.randint(0, n-1)\n    nearly_sorted[i], nearly_sorted[j] = nearly_sorted[j], nearly_sorted[i]\n\nt = time.time(); sorted(nearly_sorted)\nprint(f\"Timsort на почти отсортированном: {time.time()-t:.6f}с\")\n\nt = time.time(); sorted(data)\nprint(f\"Timsort на случайном: {time.time()-t:.6f}с\")\n\n# sorted() стабилен — порядок равных элементов сохраняется\npairs = [(1, 'b'), (2, 'a'), (1, 'a'), (2, 'b')]\nprint(sorted(pairs, key=lambda x: x[0]))\n# [(1, 'b'), (1, 'a'), (2, 'a'), (2, 'b')] — порядок (1,'b') перед (1,'a') сохранён"
+      }
+    ]
+  },
+  {
+    "title": "Рекурсия",
+    "icon": "fas fa-layer-group",
+    "order": 13,
+    "description": "Функции, вызывающие себя. Классические рекурсивные алгоритмы.",
+    "lessons": [
+      {
+        "title": "Рекурсия: принципы и задачи",
+        "order": 1,
+        "estimated_minutes": 60,
+        "content": "<h2>Рекурсия</h2><p>Функция вызывает себя. Обязательны базовый случай и рекурсивный случай. Максимальная глубина Python: 1000.</p><h3>Мемоизация</h3><p><code>@functools.lru_cache</code> — кэширование результатов.</p><h3>Ханойские башни</h3><p>Классическая рекурсивная задача: перенести n дисков с A на C через B.</p>",
+        "code_example": "import functools\n\n@functools.lru_cache(maxsize=None)\ndef fib(n):\n    if n<=1: return n\n    return fib(n-1)+fib(n-2)\n\nprint([fib(i) for i in range(10)])\n\ndef power(base, exp):\n    if exp==0: return 1\n    if exp%2==0:\n        half = power(base, exp//2)\n        return half*half\n    return base * power(base,exp-1)\n\nprint(power(2,10))  # 1024\n\ndef hanoi(n, src, dst, aux):\n    if n==1:\n        print(f'Диск 1: {src} -> {dst}')\n        return\n    hanoi(n-1, src, aux, dst)\n    print(f'Диск {n}: {src} -> {dst}')\n    hanoi(n-1, aux, dst, src)\n\nhanoi(3,'A','C','B')"
+      }
+    ]
+  },
+  {
+    "title": "Основы ООП",
+    "icon": "fas fa-cubes",
+    "order": 14,
+    "description": "Классы, объекты, методы, наследование.",
+    "lessons": [
+      {
+        "title": "Классы и объекты",
+        "order": 1,
+        "estimated_minutes": 60,
+        "content": "<h2>ООП</h2><ul><li><strong>Класс</strong> — шаблон (например, 'Студент')</li><li><strong>Объект</strong> — конкретный экземпляр</li><li><strong>Атрибуты</strong> — данные объекта</li><li><strong>Методы</strong> — действия объекта</li></ul><h3>Принципы</h3><ul><li>Инкапсуляция</li><li>Наследование</li><li>Полиморфизм</li></ul><h3>Спецметоды</h3><p>__init__ — конструктор, __str__ — строковое представление.</p>",
+        "code_example": "class Student:\n    school = 'Колледж'\n    def __init__(self, name, group):\n        self.name = name\n        self.group = group\n        self.grades = []\n    def add_grade(self, g):\n        if 2<=g<=5: self.grades.append(g)\n    def average(self):\n        return sum(self.grades)/len(self.grades) if self.grades else 0\n    def __str__(self):\n        return f'Студент {self.name} ({self.group})'\n\ns1 = Student('Анна Иванова','ИТ-21')\ns1.add_grade(5); s1.add_grade(4); s1.add_grade(5)\nprint(s1)\nprint(f'Средний балл: {s1.average():.2f}')"
+      },
+      {
+        "title": "Наследование и полиморфизм",
+        "order": 2,
+        "estimated_minutes": 60,
+        "content": "<h2>Наследование</h2><pre><code>class Child(Parent):\n    def __init__(self,...):\n        super().__init__(...)\n        self.extra = ...</code></pre><h2>Полиморфизм</h2><p>Разные классы реализуют метод с одним именем по-разному.</p>",
+        "code_example": "class Person:\n    def __init__(self, name, age):\n        self.name=name; self.age=age\n    def introduce(self):\n        return f'Меня зовут {self.name}, мне {self.age} лет'\n\nclass Student(Person):\n    def __init__(self, name, age, group):\n        super().__init__(name, age)\n        self.group=group; self.grades=[]\n    def introduce(self):\n        return f'{super().introduce()}, группа {self.group}'\n\nclass Teacher(Person):\n    def __init__(self, name, age, subject):\n        super().__init__(name, age)\n        self.subject=subject\n    def introduce(self):\n        return f'{super().introduce()}, преподаю {self.subject}'\n\npeople = [Student('Анна',20,'ИТ-21'), Teacher('Иван Ив.',45,'Инф.')]\nfor p in people:\n    print(p.introduce())"
+      }
+    ]
+  }
+]

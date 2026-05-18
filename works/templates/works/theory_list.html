@@ -1,0 +1,75 @@
+{% extends 'works/base.html' %}
+{% block title %}Теория — AlgorithmMaster{% endblock %}
+{% block content %}
+<div class="page-container">
+  <div class="page-header">
+    <h1><i class="fas fa-book-open"></i> Теория по программированию</h1>
+    <p class="page-subtitle">Изучи основы программирования на Python — от переменных до алгоритмов сортировки</p>
+  </div>
+
+  <div class="modules-grid">
+    {% for module in modules %}
+    <div class="module-card {% if module.is_completed %}module-completed{% endif %}">
+      <div class="module-icon">
+        <i class="{{ module.icon }}"></i>
+      </div>
+      <div class="module-body">
+        <h3 class="module-title">{{ module.title }}</h3>
+        <p class="module-desc">{{ module.description }}</p>
+        <div class="module-meta">
+          <span><i class="fas fa-book"></i> {{ module.lessons_count }} уроков</span>
+          {% if module.quizzes.all %}<span><i class="fas fa-question-circle"></i> Тест</span>{% endif %}
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" style="width: {{ module.progress_pct }}%"></div>
+        </div>
+        <div class="module-progress-text">{{ module.progress_done }} / {{ module.progress_total }} уроков</div>
+      </div>
+      <div class="module-footer">
+        {% with first=module.lessons.all.0 %}
+        {% if first %}
+        <a href="{% url 'theory_lesson' first.id %}" class="btn btn-primary btn-sm">
+          {% if module.is_completed %}<i class="fas fa-redo"></i> Повторить{% elif module.progress_done > 0 %}<i class="fas fa-play"></i> Продолжить{% else %}<i class="fas fa-play"></i> Начать{% endif %}
+        </a>
+        {% endif %}
+        {% endwith %}
+        {% for quiz in module.quizzes.all %}
+        <a href="{% url 'quiz_detail' quiz.id %}" class="btn btn-outline btn-sm"><i class="fas fa-tasks"></i> Тест</a>
+        {% endfor %}
+      </div>
+    </div>
+    {% empty %}
+    <div class="empty-state"><i class="fas fa-book"></i><p>Теоретические материалы ещё не добавлены.<br>Запусти: <code>python manage.py seed_theory</code></p></div>
+    {% endfor %}
+  </div>
+</div>
+
+<style>
+.page-container{max-width:1100px;margin:0 auto;padding:2rem 1rem}
+.page-header{margin-bottom:2rem}
+.page-header h1{font-size:1.8rem;margin-bottom:.5rem}
+.page-subtitle{color:#666}
+.modules-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.5rem}
+.module-card{background:#fff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;display:flex;flex-direction:column;transition:box-shadow .2s}
+.module-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.1)}
+.module-completed{border-color:#10b981}
+.module-icon{background:linear-gradient(135deg,#667eea,#764ba2);padding:1.5rem;text-align:center}
+.module-icon i{font-size:2rem;color:#fff}
+.module-completed .module-icon{background:linear-gradient(135deg,#10b981,#059669)}
+.module-body{padding:1.25rem;flex:1}
+.module-title{font-size:1.1rem;font-weight:600;margin-bottom:.5rem}
+.module-desc{color:#6b7280;font-size:.9rem;margin-bottom:.75rem}
+.module-meta{display:flex;gap:1rem;font-size:.8rem;color:#9ca3af;margin-bottom:.75rem}
+.progress-bar-wrap{background:#f3f4f6;border-radius:4px;height:6px;margin-bottom:.4rem}
+.progress-bar-fill{background:#667eea;height:100%;border-radius:4px;transition:width .3s}
+.module-completed .progress-bar-fill{background:#10b981}
+.module-progress-text{font-size:.8rem;color:#9ca3af}
+.module-footer{padding:.75rem 1.25rem;border-top:1px solid #f3f4f6;display:flex;gap:.5rem;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;border-radius:8px;font-size:.9rem;text-decoration:none;cursor:pointer;border:none}
+.btn-primary{background:#667eea;color:#fff}
+.btn-outline{background:transparent;color:#667eea;border:1px solid #667eea}
+.btn-sm{padding:.35rem .75rem;font-size:.82rem}
+.empty-state{text-align:center;padding:3rem;color:#9ca3af;grid-column:1/-1}
+.empty-state i{font-size:3rem;margin-bottom:1rem}
+</style>
+{% endblock %}

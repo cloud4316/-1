@@ -1,0 +1,189 @@
+{% extends 'works/base.html' %}
+{% block title %}Решения студентов{% endblock %}
+{% block content %}
+<div class="ts-page">
+  <div class="ts-header">
+    <h1><i class="fas fa-file-code"></i> Решения студентов</h1>
+    <a href="{% url 'gradebook' %}" class="btn-gb"><i class="fas fa-book-open"></i> Журнал</a>
+  </div>
+
+  <form method="get" class="ts-filters">
+    <select name="group" onchange="this.form.submit()">
+      <option value="">Все группы</option>
+      {% for g in all_groups %}<option value="{{ g }}" {% if group == g %}selected{% endif %}>{{ g }}</option>{% endfor %}
+    </select>
+    <select name="work" onchange="this.form.submit()">
+      <option value="">Все работы</option>
+      {% for w in works_list %}<option value="{{ w.id }}" {% if work_id == w.id|stringformat:"s" %}selected{% endif %}>{{ w.title|truncatechars:40 }}</option>{% endfor %}
+    </select>
+    <select name="status" onchange="this.form.submit()">
+      <option value="">Все статусы</option>
+      <option value="submitted" {% if status == 'submitted' %}selected{% endif %}>На проверке</option>
+      <option value="correct" {% if status == 'correct' %}selected{% endif %}>Зачтено</option>
+      <option value="partially_correct" {% if status == 'partially_correct' %}selected{% endif %}>Частично</option>
+      <option value="incorrect" {% if status == 'incorrect' %}selected{% endif %}>Не зачтено</option>
+    </select>
+  </form>
+
+  {% if messages %}{% for m in messages %}<div class="ts-msg">{{ m }}</div>{% endfor %}{% endif %}
+
+{% if pending_extensions %}
+<div class="ext-requests-section">
+  <h3><i class="fas fa-calendar-plus"></i> Запросы на продление дедлайна ({{ pending_extensions|length }})</h3>
+  {% for ext in pending_extensions %}
+  <div class="ext-request-card">
+    <div class="ext-req-info">
+      <strong>{{ ext.user.last_name }} {{ ext.user.first_name }}</strong>
+      → {{ ext.work.title }}
+      <div class="ext-reason-text">{{ ext.reason|truncatechars:100 }}</div>
+    </div>
+    <div class="ext-req-actions">
+      <form method="post" action="{% url 'approve_deadline_extension' ext.id %}" style="display:inline">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="approve">
+        <input type="datetime-local" name="new_deadline" class="ext-date-input" title="Новый дедлайн (необязательно)">
+        <button type="submit" class="btn-ext-approve">Одобрить</button>
+      </form>
+      <form method="post" action="{% url 'approve_deadline_extension' ext.id %}" style="display:inline">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="reject">
+        <button type="submit" class="btn-ext-reject">Отклонить</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+<style>
+.ext-requests-section{background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:1.25rem;margin-bottom:1.5rem}
+.ext-requests-section h3{font-size:.95rem;margin:0 0 .75rem}
+.ext-request-card{background:#fff;border:1px solid #bfdbfe;border-radius:8px;padding:.75rem 1rem;margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem}
+.ext-req-info strong{font-size:.9rem}
+.ext-reason-text{font-size:.8rem;color:#6b7280;margin-top:.2rem}
+.ext-req-actions{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.ext-date-input{border:1px solid #e5e7eb;border-radius:5px;padding:.3rem .5rem;font-size:.8rem}
+.btn-ext-approve{background:#10b981;color:#fff;border:none;padding:.35rem .8rem;border-radius:5px;cursor:pointer;font-size:.82rem}
+.btn-ext-reject{background:#ef4444;color:#fff;border:none;padding:.35rem .8rem;border-radius:5px;cursor:pointer;font-size:.82rem}
+</style>
+{% endif %}
+
+  <div class="ts-table-wrap">
+    <table class="ts-table">
+      <thead><tr><th>Студент</th><th>Группа</th><th>Работа</th><th>Статус</th><th>Оценка</th><th>Дата</th><th>Действие</th></tr></thead>
+      <tbody>
+        {% for sol in page_obj %}
+        <tr>
+          <td class="td-name">{{ sol.student.last_name }} {{ sol.student.first_name }}</td>
+          <td>{{ sol.student.userprogress.group|default:"—" }}</td>
+          <td class="td-work">{{ sol.work.title|truncatechars:35 }}</td>
+          <td>
+            <span class="status-badge status-{{ sol.status }}">
+              {% if sol.status == 'submitted' %}На проверке
+              {% elif sol.status == 'correct' %}Зачтено
+              {% elif sol.status == 'partially_correct' %}Частично
+              {% elif sol.status == 'incorrect' %}Не зачтено
+              {% elif sol.status == 'checking' %}Проверяется
+              {% else %}{{ sol.status }}{% endif %}
+            </span>
+          </td>
+          <td><strong>{{ sol.score|default:"—" }}</strong>{% if sol.work.max_score %}/{{ sol.work.max_score }}{% endif %}</td>
+          <td class="td-date">{{ sol.submitted_at|date:"d.m H:i" }}</td>
+          <td>
+            <button class="btn-grade-open" onclick="openGrade({{ sol.id }}, '{{ sol.work.max_score|default:100 }}', {{ sol.score|default:0 }}, '{{ sol.status }}')">
+              <i class="fas fa-pen"></i> Оценить
+            </button>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" style="text-align:center;padding:2rem;color:#9ca3af">Нет решений</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <div class="ts-pagination">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}&group={{ group }}&work={{ work_id }}&status={{ status }}">&laquo;</a>{% endif %}
+    Стр. {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}&group={{ group }}&work={{ work_id }}&status={{ status }}">&raquo;</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<!-- Модальное окно оценки -->
+<div class="grade-modal" id="gradeModal" style="display:none">
+  <div class="grade-modal-box">
+    <h3><i class="fas fa-pen"></i> Поставить оценку</h3>
+    <form method="post" id="gradeForm">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <label>Оценка (0 – <span id="maxScore">100</span>)</label>
+      <input type="number" name="score" id="scoreInput" min="0" max="100" class="grade-input">
+      <label>Статус</label>
+      <select name="status" id="statusSelect" class="grade-input">
+        <option value="submitted">На проверке</option>
+        <option value="correct">Зачтено</option>
+        <option value="partially_correct">Частично</option>
+        <option value="incorrect">Не зачтено</option>
+      </select>
+      <label>Комментарий (необязательно)</label>
+      <textarea name="comment" rows="3" class="grade-input" placeholder="Что нужно исправить…"></textarea>
+      <div class="grade-btns">
+        <button type="submit" class="btn-save">Сохранить</button>
+        <button type="button" onclick="document.getElementById('gradeModal').style.display='none'" class="btn-cancel">Отмена</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openGrade(solId, maxScore, curScore, curStatus) {
+  const form = document.getElementById('gradeForm');
+  form.action = `/teacher/grade/${solId}/`;
+  document.getElementById('maxScore').textContent = maxScore;
+  document.getElementById('scoreInput').max = maxScore;
+  document.getElementById('scoreInput').value = curScore || '';
+  const sel = document.getElementById('statusSelect');
+  for (let opt of sel.options) if (opt.value === curStatus) opt.selected = true;
+  document.getElementById('gradeModal').style.display = 'flex';
+}
+document.getElementById('gradeModal').addEventListener('click', function(e) {
+  if (e.target === this) this.style.display = 'none';
+});
+</script>
+<style>
+.ts-page{max-width:1100px;margin:0 auto;padding:2rem 1rem}
+.ts-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem}
+.ts-header h1{font-size:1.5rem;display:flex;align-items:center;gap:.5rem}
+.btn-gb{background:#667eea;color:#fff;text-decoration:none;padding:.4rem .9rem;border-radius:8px;font-size:.85rem;display:flex;align-items:center;gap:.4rem}
+.ts-filters{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem}
+.ts-filters select{padding:.4rem .7rem;border:1.5px solid #e5e7eb;border-radius:8px;font-size:.85rem;cursor:pointer}
+.ts-msg{background:#d1fae5;color:#065f46;padding:.6rem 1rem;border-radius:8px;margin-bottom:.75rem;font-size:.88rem}
+.ts-table-wrap{border:1px solid #e5e7eb;border-radius:12px;overflow:hidden}
+.ts-table{width:100%;border-collapse:collapse;font-size:.88rem}
+.ts-table th{background:#f9fafb;padding:.6rem .9rem;text-align:left;font-weight:600;color:#6b7280;border-bottom:1px solid #e5e7eb}
+.ts-table td{padding:.55rem .9rem;border-bottom:1px solid #f3f4f6;vertical-align:middle}
+.ts-table tr:last-child td{border-bottom:none}
+.td-name{font-weight:600}
+.td-work{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.td-date{font-size:.8rem;color:#6b7280}
+.status-badge{padding:.2rem .6rem;border-radius:20px;font-size:.78rem;font-weight:500}
+.status-submitted{background:#e0f2fe;color:#0369a1}
+.status-correct{background:#d1fae5;color:#065f46}
+.status-partially_correct{background:#fef9c3;color:#854d0e}
+.status-incorrect{background:#fee2e2;color:#991b1b}
+.status-checking{background:#f3e8ff;color:#7c3aed}
+.gbadge{background:#eff6ff;color:#1d4ed8;padding:.15rem .5rem;border-radius:20px;font-size:.75rem}
+.btn-grade-open{background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;padding:.35rem .7rem;border-radius:6px;cursor:pointer;font-size:.82rem}
+.btn-grade-open:hover{background:#667eea;color:#fff;border-color:#667eea}
+.ts-pagination{display:flex;justify-content:center;align-items:center;gap:.75rem;margin-top:1rem;font-size:.9rem;color:#6b7280}
+.ts-pagination a{color:#667eea;text-decoration:none;padding:.3rem .6rem;border:1px solid #e5e7eb;border-radius:6px}
+.grade-modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:1000}
+.grade-modal-box{background:#fff;border-radius:16px;padding:1.75rem;width:100%;max-width:440px;display:flex;flex-direction:column;gap:.75rem}
+.grade-modal-box h3{font-size:1.1rem;margin:0}
+.grade-modal-box label{font-size:.85rem;font-weight:500;color:#374151}
+.grade-input{padding:.55rem .8rem;border:1.5px solid #e5e7eb;border-radius:8px;font-size:.9rem;width:100%;box-sizing:border-box}
+.grade-btns{display:flex;gap:.5rem;margin-top:.25rem}
+.btn-save{flex:1;background:#667eea;color:#fff;border:none;padding:.6rem;border-radius:8px;cursor:pointer;font-weight:600}
+.btn-cancel{background:#f3f4f6;color:#374151;border:none;padding:.6rem 1rem;border-radius:8px;cursor:pointer}
+</style>
+{% endblock %}

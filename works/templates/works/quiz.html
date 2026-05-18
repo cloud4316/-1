@@ -1,0 +1,115 @@
+{% extends 'works/base.html' %}
+{% block title %}{{ quiz.title }}{% endblock %}
+{% block content %}
+<div class="quiz-page">
+  <div class="quiz-header">
+    <a href="{% url 'quiz_list' %}" class="back-link"><i class="fas fa-arrow-left"></i> Все тесты</a>
+    <h1>{{ quiz.title }}</h1>
+    {% if quiz.module %}<p class="quiz-module"><i class="fas fa-book"></i> Раздел: {{ quiz.module.title }}</p>{% endif %}
+    <div class="quiz-info-row">
+      <span><i class="fas fa-question-circle"></i> {{ questions|length }} вопросов</span>
+      <span><i class="fas fa-award"></i> Проходной балл: {{ quiz.pass_score }}%</span>
+      {% if best_attempt %}
+      <span class="best {% if best_attempt.passed %}pass{% else %}fail{% endif %}">
+        <i class="fas fa-history"></i> Лучший результат: {{ best_attempt.score }}%
+      </span>
+      {% endif %}
+    </div>
+  </div>
+
+  <form method="post" action="{% url 'submit_quiz' quiz.id %}" class="quiz-form">
+    {% csrf_token %}
+    {% for question in questions %}
+    <div class="question-card" id="q{{ forloop.counter }}">
+      <div class="question-header">
+        <span class="q-num">{{ forloop.counter }}</span>
+        <span class="q-type-badge">{% if question.q_type == 'multiple' %}Несколько ответов{% else %}Один ответ{% endif %}</span>
+      </div>
+      <p class="question-text">{{ question.text|linebreaksbr }}</p>
+      {% if question.code_snippet %}
+      <pre class="q-code"><code>{{ question.code_snippet }}</code></pre>
+      {% endif %}
+      <div class="choices-list">
+        {% for choice in question.choices.all %}
+        <label class="choice-label">
+          {% if question.q_type == 'multiple' %}
+          <input type="checkbox" name="q_{{ question.id }}" value="{{ choice.id }}">
+          {% else %}
+          <input type="radio" name="q_{{ question.id }}" value="{{ choice.id }}">
+          {% endif %}
+          <span class="choice-text">{{ choice.text }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+
+    <div class="quiz-submit-row">
+      <div class="progress-indicator">
+        <span id="answeredCount">0</span> / {{ questions|length }} отвечено
+      </div>
+      <button type="submit" class="btn-submit-quiz"><i class="fas fa-paper-plane"></i> Отправить ответы</button>
+    </div>
+  </form>
+</div>
+
+<script>
+// Счётчик отвеченных вопросов
+function updateCount() {
+  const answered = document.querySelectorAll('.question-card');
+  let count = 0;
+  answered.forEach(card => {
+    if (card.querySelector('input:checked')) count++;
+  });
+  document.getElementById('answeredCount').textContent = count;
+}
+document.querySelectorAll('input[type=radio], input[type=checkbox]').forEach(inp => {
+  inp.addEventListener('change', updateCount);
+  // Подсветка выбранного варианта
+  inp.addEventListener('change', function() {
+    const card = this.closest('.question-card');
+    if (this.type === 'radio') {
+      card.querySelectorAll('.choice-label').forEach(l => l.classList.remove('selected'));
+    }
+    if (this.checked) this.closest('.choice-label').classList.add('selected');
+    else this.closest('.choice-label').classList.remove('selected');
+  });
+});
+
+// Предупреждение при попытке уйти со страницы
+let submitted = false;
+document.querySelector('.quiz-form').addEventListener('submit', () => { submitted = true; });
+window.addEventListener('beforeunload', e => {
+  if (!submitted) { e.preventDefault(); e.returnValue = ''; }
+});
+</script>
+
+<style>
+.quiz-page{max-width:800px;margin:0 auto;padding:2rem 1rem}
+.quiz-header{margin-bottom:2rem}
+.back-link{display:inline-flex;align-items:center;gap:.5rem;color:#667eea;text-decoration:none;font-size:.85rem;margin-bottom:1rem}
+.quiz-header h1{font-size:1.6rem;margin-bottom:.4rem}
+.quiz-module{color:#6b7280;font-size:.9rem;margin-bottom:.75rem}
+.quiz-info-row{display:flex;gap:1.5rem;flex-wrap:wrap;font-size:.85rem;color:#6b7280}
+.best.pass{color:#059669;font-weight:600}
+.best.fail{color:#dc2626;font-weight:600}
+.quiz-form{display:flex;flex-direction:column;gap:1.25rem}
+.question-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:1.5rem;transition:border-color .2s}
+.question-card:focus-within{border-color:#667eea}
+.question-header{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem}
+.q-num{width:32px;height:32px;border-radius:50%;background:#667eea;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;flex-shrink:0}
+.q-type-badge{font-size:.75rem;background:#f3f4f6;color:#6b7280;padding:.2rem .6rem;border-radius:20px}
+.question-text{font-size:1rem;line-height:1.6;margin-bottom:1rem;color:#1f2937}
+.q-code{background:#1e1e2e;color:#f8f8f2;padding:1rem;border-radius:8px;font-size:.85rem;overflow-x:auto;margin-bottom:1rem;white-space:pre-wrap}
+.choices-list{display:flex;flex-direction:column;gap:.6rem}
+.choice-label{display:flex;align-items:flex-start;gap:.75rem;padding:.75rem 1rem;border:1.5px solid #e5e7eb;border-radius:8px;cursor:pointer;transition:.15s}
+.choice-label:hover{border-color:#a5b4fc;background:#f8f8ff}
+.choice-label.selected{border-color:#667eea;background:#eff6ff}
+.choice-label input{margin-top:.15rem;accent-color:#667eea}
+.choice-text{font-size:.95rem;line-height:1.5}
+.quiz-submit-row{display:flex;justify-content:space-between;align-items:center;padding:1rem;background:#fff;border:1px solid #e5e7eb;border-radius:12px;position:sticky;bottom:1rem}
+.progress-indicator{font-size:.9rem;color:#6b7280}
+.btn-submit-quiz{background:#667eea;color:#fff;border:none;padding:.75rem 2rem;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:.5rem}
+.btn-submit-quiz:hover{background:#5a67d8}
+</style>
+{% endblock %}

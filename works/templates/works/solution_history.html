@@ -1,0 +1,151 @@
+{% extends 'works/base.html' %}
+{% block title %}История решений — {{ work.title }}{% endblock %}
+{% block content %}
+<div class="sh-page">
+  <div class="sh-header">
+    <a href="{% url 'work_detail' work.id %}" class="back-link"><i class="fas fa-arrow-left"></i> К заданию</a>
+    <h1><i class="fas fa-history"></i> История решений</h1>
+    <p class="sh-work-title">{{ work.title }}</p>
+  </div>
+
+  {% if attempts %}
+  <div class="timeline">
+    {% for sol in attempts %}
+    <div class="attempt-card status-{{ sol.status }}">
+      <div class="attempt-header">
+        <div class="attempt-meta">
+          <span class="attempt-num">#{{ forloop.revcounter }}</span>
+          {% if is_teacher %}
+          <span class="student-name"><i class="fas fa-user"></i> {{ sol.student.last_name }} {{ sol.student.first_name }}</span>
+          {% endif %}
+          <span class="attempt-date"><i class="fas fa-clock"></i> {{ sol.submitted_at|date:"d.m.Y H:i" }}</span>
+        </div>
+        <div class="attempt-result">
+          <span class="status-badge status-{{ sol.status }}">
+            {% if sol.status == 'correct' %}✓ Зачтено
+            {% elif sol.status == 'partially_correct' %}◑ Частично
+            {% elif sol.status == 'incorrect' %}✗ Не зачтено
+            {% elif sol.status == 'submitted' %}⏳ На проверке
+            {% elif sol.status == 'checking' %}🔄 Проверяется
+            {% else %}{{ sol.status }}{% endif %}
+          </span>
+          {% if sol.score %}<span class="attempt-score">{{ sol.score }}/{{ work.max_score }}</span>{% endif %}
+        </div>
+      </div>
+
+      {% if sol.teacher_comments.all %}
+      <div class="teacher-feedback">
+        {% for comment in sol.teacher_comments.all %}
+        <div class="comment-block">
+          <i class="fas fa-comment-dots"></i>
+          <div>
+            <span class="comment-author">{{ comment.teacher.last_name }}:</span>
+            {{ comment.text }}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="attempt-actions">
+        <a href="{% url 'solution_detail' sol.id %}" class="btn-view">
+          <i class="fas fa-eye"></i> Посмотреть код
+        </a>
+        {% if is_teacher %}
+        <form method="post" action="{% url 'manual_grade' sol.id %}" style="display:inline">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="button" class="btn-grade" onclick="openGradeModal({{ sol.id }}, {{ sol.work.max_score|default:10 }}, {{ sol.score|default:0 }}, '{{ sol.status }}')">
+            <i class="fas fa-pen"></i> Оценить
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="sh-empty"><i class="fas fa-inbox"></i><p>Решений пока нет</p></div>
+  {% endif %}
+</div>
+
+{% if is_teacher %}
+<div class="grade-modal" id="gradeModal" style="display:none">
+  <div class="grade-modal-box">
+    <h3><i class="fas fa-pen"></i> Оценить решение</h3>
+    <form method="post" id="gradeForm">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <label>Оценка (0–<span id="mxScore">10</span>)</label>
+      <input type="number" name="score" id="scoreInput" class="grade-input" min="0">
+      <label>Статус</label>
+      <select name="status" id="statusSel" class="grade-input">
+        <option value="submitted">На проверке</option>
+        <option value="correct">Зачтено</option>
+        <option value="partially_correct">Частично</option>
+        <option value="incorrect">Не зачтено</option>
+      </select>
+      <label>Комментарий</label>
+      <textarea name="comment" rows="3" class="grade-input" placeholder="Замечания и рекомендации..."></textarea>
+      <div style="display:flex;gap:.5rem;margin-top:.5rem">
+        <button type="submit" style="flex:1;background:#667eea;color:#fff;border:none;padding:.6rem;border-radius:8px;cursor:pointer;font-weight:600">Сохранить</button>
+        <button type="button" onclick="document.getElementById('gradeModal').style.display='none'" style="background:#f3f4f6;border:none;padding:.6rem 1rem;border-radius:8px;cursor:pointer">Отмена</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+function openGradeModal(solId, maxScore, curScore, curStatus) {
+  document.getElementById('gradeForm').action = `/teacher/grade/${solId}/`;
+  document.getElementById('mxScore').textContent = maxScore;
+  document.getElementById('scoreInput').max = maxScore;
+  document.getElementById('scoreInput').value = curScore || '';
+  const sel = document.getElementById('statusSel');
+  for (let o of sel.options) if (o.value === curStatus) o.selected = true;
+  document.getElementById('gradeModal').style.display = 'flex';
+}
+document.getElementById('gradeModal')?.addEventListener('click', function(e) {
+  if (e.target === this) this.style.display = 'none';
+});
+</script>
+{% endif %}
+
+<style>
+.sh-page{max-width:800px;margin:0 auto;padding:2rem 1rem}
+.sh-header{margin-bottom:2rem}
+.back-link{display:inline-flex;align-items:center;gap:.5rem;color:#667eea;text-decoration:none;font-size:.85rem;margin-bottom:.75rem}
+.sh-header h1{font-size:1.6rem;display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem}
+.sh-work-title{color:#6b7280;font-size:.95rem}
+.timeline{display:flex;flex-direction:column;gap:1rem}
+.attempt-card{background:#fff;border-radius:12px;border:2px solid #e5e7eb;padding:1.25rem;transition:.15s}
+.attempt-card.status-correct{border-color:#6ee7b7}
+.attempt-card.status-partially_correct{border-color:#fcd34d}
+.attempt-card.status-incorrect{border-color:#fca5a5}
+.attempt-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;margin-bottom:.75rem}
+.attempt-meta{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+.attempt-num{background:#667eea;color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0}
+.student-name{font-weight:600;color:#1f2937;font-size:.9rem}
+.attempt-date{font-size:.82rem;color:#9ca3af}
+.attempt-result{display:flex;align-items:center;gap:.75rem}
+.status-badge{padding:.25rem .75rem;border-radius:20px;font-size:.8rem;font-weight:500}
+.status-correct{background:#d1fae5;color:#065f46}
+.status-partially_correct{background:#fef9c3;color:#854d0e}
+.status-incorrect{background:#fee2e2;color:#991b1b}
+.status-submitted{background:#e0f2fe;color:#0369a1}
+.status-checking{background:#f3e8ff;color:#7c3aed}
+.attempt-score{font-weight:700;font-size:1rem;color:#1f2937}
+.teacher-feedback{background:#f0fdf4;border-left:3px solid #10b981;padding:.6rem .9rem;border-radius:0 8px 8px 0;margin-bottom:.75rem}
+.comment-block{display:flex;gap:.6rem;font-size:.87rem;color:#065f46}
+.comment-author{font-weight:600}
+.attempt-actions{display:flex;gap:.5rem;flex-wrap:wrap}
+.btn-view{background:#f3f4f6;color:#374151;text-decoration:none;padding:.4rem .85rem;border-radius:8px;font-size:.82rem;display:flex;align-items:center;gap:.35rem}
+.btn-grade{background:#667eea;color:#fff;border:none;padding:.4rem .85rem;border-radius:8px;font-size:.82rem;cursor:pointer;display:flex;align-items:center;gap:.35rem}
+.sh-empty{text-align:center;padding:3rem;color:#9ca3af}
+.sh-empty i{font-size:2.5rem;display:block;margin-bottom:.75rem}
+.grade-modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:1000}
+.grade-modal-box{background:#fff;border-radius:16px;padding:1.75rem;width:100%;max-width:420px;display:flex;flex-direction:column;gap:.65rem}
+.grade-modal-box h3{margin:0;font-size:1.1rem}
+.grade-modal-box label{font-size:.85rem;font-weight:500;color:#374151}
+.grade-input{padding:.55rem .8rem;border:1.5px solid #e5e7eb;border-radius:8px;font-size:.9rem;width:100%;box-sizing:border-box}
+</style>
+{% endblock %}

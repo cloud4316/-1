@@ -1,0 +1,45 @@
+{% extends 'works/base.html' %}
+{% block title %}Уведомления{% endblock %}
+{% block content %}
+<div class="notif-page">
+  <h1><i class="fas fa-bell"></i> Уведомления</h1>
+  <div class="notif-list">
+    {% for n in notifications %}
+    <div class="notif-item notif-{{ n.n_type }} {% if not n.is_read %}unread{% endif %}">
+      <div class="notif-icon">
+        {% if n.n_type == 'approved' %}✅
+        {% elif n.n_type == 'graded' %}📝
+        {% elif n.n_type == 'commented' %}💬
+        {% elif n.n_type == 'deadline' %}⏰
+        {% else %}ℹ️{% endif %}
+      </div>
+      <div class="notif-body">
+        <div class="notif-title">{{ n.title }}</div>
+        {% if n.message %}<div class="notif-msg">{{ n.message }}</div>{% endif %}
+        <div class="notif-time">{{ n.created_at|date:"d.m.Y H:i" }}</div>
+      </div>
+      {% if n.link %}
+      <a href="{{ n.link }}" class="notif-link"><i class="fas fa-arrow-right"></i></a>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="notif-empty"><span>🔔</span><p>Уведомлений пока нет</p></div>
+    {% endfor %}
+  </div>
+</div>
+<style>
+.notif-page{max-width:700px;margin:0 auto;padding:2rem 1rem}
+.notif-page h1{font-size:1.6rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem}
+.notif-list{display:flex;flex-direction:column;gap:.6rem}
+.notif-item{display:flex;align-items:flex-start;gap:1rem;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:1rem 1.25rem;transition:.15s}
+.notif-item.unread{border-left:4px solid #667eea;background:#fafbff}
+.notif-icon{font-size:1.4rem;flex-shrink:0}
+.notif-body{flex:1}
+.notif-title{font-weight:600;font-size:.95rem;color:#1f2937}
+.notif-msg{font-size:.85rem;color:#6b7280;margin-top:.2rem}
+.notif-time{font-size:.78rem;color:#9ca3af;margin-top:.3rem}
+.notif-link{color:#667eea;padding:.3rem .5rem;border-radius:6px;display:flex;align-items:center}
+.notif-empty{text-align:center;padding:3rem;color:#9ca3af}
+.notif-empty span{font-size:3rem;display:block;margin-bottom:.75rem}
+</style>
+{% endblock %}

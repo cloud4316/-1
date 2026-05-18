@@ -1,0 +1,60 @@
+{% extends 'works/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+	<div class="auth-layout">
+		<div class="auth-container">
+			<div class="auth-card" id="login-card">
+				<div class="auth-header">
+					<div class="auth-logo">
+						<i class="fas fa-code"></i>
+						<span>AlgorithmMaster</span>
+					</div>
+					<h1>Добро пожаловать!</h1>
+					<p>Войдите в свой аккаунт чтобы продолжить</p>
+				</div>
+
+				{% if form.errors %}
+				<div class="alert alert-error">
+					<i class="fas fa-exclamation-circle"></i>
+					Неверное имя пользователя или пароль. Попробуйте снова.
+				</div>
+				{% endif %}
+
+				<form method="post" class="auth-form" id="login-form">
+					{% csrf_token %}
+					<div class="form-group">
+						<label for="username" class="form-label"><i class="fas fa-user"></i>Имя пользователя</label>
+						<input type="text" name="username" id="username" class="form-input" placeholder="Введите ваш username" required>
+					</div>
+					<div class="form-group">
+						<label for="password" class="form-label"><i class="fas fa-lock"></i>Пароль</label>
+						<div style="position:relative;">
+							<input type="password" name="password" id="password" class="form-input" placeholder="Введите ваш пароль" required>
+							<button type="button" id="toggle-password" aria-label="Показать пароль"><i class="fas fa-eye"></i></button>
+						</div>
+						<small id="caps-indicator" style="display:none; color:#dc2626;">Включён Caps Lock</small>
+					</div>
+					<button type="submit" class="btn btn-primary btn-full" id="login-submit"><i class="fas fa-sign-in-alt"></i>Войти</button>
+				</form>
+
+				<div class="auth-footer">
+					<p>Нет аккаунта? <a href="{% url 'register' %}" class="auth-link">Зарегистрируйтесь</a></p>
+					<p><a href="#" class="auth-link">Забыли пароль?</a></p>
+				</div>
+			</div>
+		</div>
+		<div class="auth-game" aria-hidden="true">
+			<canvas id="login-game" width="360" height="280"></canvas>
+			<div class="game-hud">
+				<span id="game-score" style="color: #000000;">0</span>
+				<span id="game-time" style="color: #000000;">30s</span>
+			</div>
+			<div style="margin-top:8px; display:flex; justify-content:center;">
+				<button type="button" id="game-restart" class="btn btn-white">Играть ещё</button>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}

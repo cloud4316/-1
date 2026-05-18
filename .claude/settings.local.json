@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python manage.py seed_theory_full)",
+      "Bash(python -c ' *)",
+      "Bash(python manage.py seed_theory_full3)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "Bash(python manage.py makemigrations)",
+      "Bash(python manage.py migrate)",
+      "Bash(python manage.py check)"
+    ]
+  }
+}

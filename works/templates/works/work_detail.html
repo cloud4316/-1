@@ -1,0 +1,959 @@
+{% extends 'works/base.html' %}
+{% load static %}
+
+{% block title %}{{ work.title }} - Практическая работа #{{ work.order }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'works/css/work-detail.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="work-detail-container">
+    <!-- Хлебные крошки -->
+    <nav class="breadcrumb">
+        <a href="{% url 'work_list' %}" class="breadcrumb-item">
+            <i class="fas fa-arrow-left"></i>
+            Все работы
+        </a>
+        <span class="breadcrumb-divider">/</span>
+        <span class="breadcrumb-item active">Работа #{{ work.order }}</span>
+    </nav>
+
+    <!-- Заголовок работы -->
+    <div class="work-header">
+        <div class="work-title-section">
+            <h1>{{ work.title }}</h1>
+            <div class="work-meta">
+                <span class="meta-item difficulty-{{ work.difficulty }}">
+                    <i class="fas fa-signal"></i>
+                    {{ work.get_difficulty_display }}
+                </span>
+                <span class="meta-item">
+                    <i class="fas fa-star"></i>
+                    {{ work.max_score }} баллов
+                </span>
+                {% if work.deadline %}
+                <span class="meta-item {% if work.deadline < now %}overdue{% endif %}">
+                    <i class="fas fa-clock"></i>
+                    До {{ work.deadline|date:"d.m.Y H:i" }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="work-stats">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-paper-plane"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-number">{{ total_attempts }}</span>
+                    <span class="stat-label">Попыток</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-number">{{ successful_attempts }}</span>
+                    <span class="stat-label">Успешных</span>
+                </div>
+            </div>
+            
+            {% if best_solution %}
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-number">{{ best_solution.score }}/{{ work.max_score }}</span>
+                    <span class="stat-label">Лучший результат</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="work-content">
+        <!-- Теоретический материал -->
+        {% if work.theory_text %}
+        <section class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-book"></i>Теоретический материал</h2>
+                <button class="btn btn-sm btn-outline toggle-section">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="section-content">
+                <div class="theory-content">
+                    {{ work.theory_text|linebreaks }}
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- Задание -->
+        <section class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-tasks"></i>Задание</h2>
+            </div>
+            <div class="section-content">
+                <div class="task-content">
+                    {{ work.description|linebreaks }}
+                </div>
+                
+                {% if work.input_example or work.output_example %}
+                <div class="task-examples">
+                    <h3>Примеры:</h3>
+                    
+                    {% if work.input_example %}
+                    <div class="example-card">
+                        <div class="example-header">
+                            <i class="fas fa-arrow-right"></i>
+                            <span>Входные данные</span>
+                        </div>
+                        <pre class="example-code">{{ work.input_example }}</pre>
+                    </div>
+                    {% endif %}
+                    
+                    {% if work.output_example %}
+                    <div class="example-card">
+                        <div class="example-header">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>Ожидаемый вывод</span>
+                        </div>
+                        <pre class="example-code">{{ work.output_example }}</pre>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Отправка решения -->
+        <section class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-code"></i>Отправить решение</h2>
+            </div>
+            <div class="section-content">
+                <form method="post" enctype="multipart/form-data" class="solution-form" id="solution-form">
+                    {% csrf_token %}
+                    
+                    <div class="form-group">
+                        <label class="file-upload-label">
+                            <i class="fas fa-upload"></i>
+                            <span id="file-name">Выберите файл с решением</span>
+                            <input type="file" name="code_file" id="code_file" accept=".py,.java,.cpp,.js,.txt" required 
+                                   onchange="document.getElementById('file-name').textContent = this.files[0]?.name || 'Выберите файл с решением'">
+                        </label>
+                        <small class="form-text">Поддерживаемые форматы: .py, .java, .cpp, .js, .txt</small>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">
+                            <i class="fas fa-paper-plane"></i>
+                            Отправить на проверку
+                        </button>
+                        
+                        <button type="button" class="btn btn-secondary" onclick="testSolution()">
+                            <i class="fas fa-vial"></i>
+                            Протестировать локально
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- История отправок -->
+        <section class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-history"></i>История отправок</h2>
+                <span class="badge">{{ solutions.count }}</span>
+            </div>
+            <div class="section-content">
+                {% if solutions %}
+                <div class="solutions-timeline">
+                    {% for solution in solutions %}
+                    <div class="timeline-item {% if solution.status == 'correct' %}success{% elif solution.status == 'incorrect' %}error{% else %}warning{% endif %}">
+                        <div class="timeline-point"></div>
+                        <div class="timeline-content">
+                            <div class="solution-header">
+                                <div class="solution-info">
+                                    <span class="solution-date">{{ solution.submitted_at|date:"d.m.Y H:i" }}</span>
+                                    <span class="solution-file">
+                                        <i class="fas fa-file-code"></i>
+                                        {{ solution.code_file.name|cut:"solutions/" }}
+                                    </span>
+                                </div>
+                                <div class="solution-status">
+                                    <span class="status-badge status-{{ solution.status }}">
+                                        {{ solution.get_status_display }}
+                                    </span>
+                                    {% if solution.score > 0 %}
+                                    <span class="score-badge">
+                                        {{ solution.score }}/{{ work.max_score }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            {% if solution.comment or solution.test_results %}
+                            <div class="solution-details">
+                                {% if solution.comment %}
+                                <div class="solution-comment">
+                                    <strong><i class="fas fa-comment"></i> Комментарий:</strong>
+                                    {{ solution.comment }}
+                                </div>
+                                {% endif %}
+                                
+                                {% if solution.test_results %}
+                                <div class="test-results">
+                                    <strong><i class="fas fa-vial"></i> Тесты:</strong>
+                                    <span class="tests-passed">
+                                        {{ solution.test_results.passed }}/{{ solution.test_results.total }} пройдено
+                                    </span>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="solution-actions">
+                                    <button class="btn btn-sm btn-outline view-details" 
+                                            onclick="viewSolutionDetails({{ solution.id }})">
+                                        <i class="fas fa-eye"></i> Подробнее
+                                    </button>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>Вы еще не отправляли решения для этой работы</p>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- Подсказки -->
+{% if work.hints.exists %}
+<div class="hints-section" id="hintsSection">
+  <h3><i class="fas fa-lightbulb" style="color:#f59e0b"></i> Подсказки</h3>
+  <p class="hints-note">Каждая подсказка стоит несколько очков из вашего рейтинга.</p>
+  <div class="hints-list">
+    {% for hint in work.hints.all %}
+    <div class="hint-card" id="hint-{{ hint.id }}">
+      <div class="hint-locked" id="hint-locked-{{ hint.id }}">
+        <span class="hint-num">Подсказка {{ forloop.counter }}</span>
+        <span class="hint-cost">{{ hint.xp_cost }} очков</span>
+        <button class="btn-unlock-hint" onclick="unlockHint({{ hint.id }}, {{ hint.xp_cost }})">
+          <i class="fas fa-unlock-alt"></i> Открыть
+        </button>
+      </div>
+      <div class="hint-revealed" id="hint-revealed-{{ hint.id }}" style="display:none">
+        <strong>{{ hint.title }}</strong>
+        <p id="hint-text-{{ hint.id }}"></p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+<script>
+function unlockHint(hintId, cost) {
+  if (!confirm(`Открыть подсказку за ${cost} очков?`)) return;
+  fetch(`/api/unlock-hint/${hintId}/`, {
+    method: 'POST',
+    headers: {'X-CSRFToken': '{{ csrf_token }}'},
+  }).then(r => r.json()).then(d => {
+    if (d.error) { alert(d.error); return; }
+    document.getElementById(`hint-locked-${hintId}`).style.display = 'none';
+    document.getElementById(`hint-revealed-${hintId}`).style.display = 'block';
+    document.getElementById(`hint-text-${hintId}`).textContent = d.text;
+  }).catch(() => alert('Ошибка соединения'));
+}
+</script>
+<style>
+.hints-section{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:1.25rem;margin:1.5rem 0}
+.hints-section h3{margin:0 0 .4rem;font-size:1rem}
+.hints-note{font-size:.82rem;color:#92400e;margin-bottom:.85rem}
+.hints-list{display:flex;flex-direction:column;gap:.5rem}
+.hint-card{background:#fff;border:1px solid #fde68a;border-radius:8px;padding:.75rem 1rem}
+.hint-locked{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+.hint-num{font-weight:600;font-size:.88rem}
+.hint-cost{background:#fef3c7;color:#92400e;padding:.15rem .5rem;border-radius:12px;font-size:.78rem}
+.btn-unlock-hint{background:#f59e0b;color:#fff;border:none;padding:.3rem .75rem;border-radius:6px;cursor:pointer;font-size:.82rem}
+.btn-unlock-hint:hover{background:#d97706}
+.hint-revealed strong{display:block;margin-bottom:.3rem;font-size:.88rem;color:#92400e}
+.hint-revealed p{font-size:.88rem;color:#374151;margin:0}
+</style>
+{% endif %}
+
+{% if not request.user.is_staff and work.deadline %}
+{% with ext=user_extension %}
+<div class="deadline-ext-section">
+  {% if ext and ext.status == 'pending' %}
+    <div class="ext-status pending"><i class="fas fa-hourglass-half"></i> Запрос на продление ожидает рассмотрения</div>
+  {% elif ext and ext.status == 'approved' %}
+    <div class="ext-status approved"><i class="fas fa-check-circle"></i> Дедлайн продлён</div>
+  {% elif ext and ext.status == 'rejected' %}
+    <div class="ext-status rejected"><i class="fas fa-times-circle"></i> Запрос отклонён</div>
+    <form method="post" action="{% url 'request_deadline_extension' work.id %}">
+      {% csrf_token %}
+      <textarea name="reason" placeholder="Причина запроса продления..." class="ext-reason" rows="2"></textarea>
+      <button type="submit" class="btn-ext-request">Запросить повторно</button>
+    </form>
+  {% else %}
+    <form method="post" action="{% url 'request_deadline_extension' work.id %}">
+      {% csrf_token %}
+      <div class="ext-form-header"><i class="fas fa-calendar-plus"></i> Нужно больше времени?</div>
+      <textarea name="reason" placeholder="Опишите причину..." class="ext-reason" rows="2"></textarea>
+      <button type="submit" class="btn-ext-request">Запросить продление</button>
+    </form>
+  {% endif %}
+</div>
+{% endwith %}
+{% endif %}
+<style>
+.deadline-ext-section{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:1rem;margin:1rem 0}
+.ext-form-header{font-size:.88rem;font-weight:600;color:#1d4ed8;margin-bottom:.5rem}
+.ext-reason{width:100%;border:1px solid #bfdbfe;border-radius:6px;padding:.5rem;font-size:.85rem;resize:vertical;box-sizing:border-box;margin-bottom:.5rem}
+.btn-ext-request{background:#3b82f6;color:#fff;border:none;padding:.4rem 1rem;border-radius:6px;cursor:pointer;font-size:.85rem}
+.ext-status{padding:.5rem .75rem;border-radius:6px;font-size:.85rem;display:flex;align-items:center;gap:.4rem}
+.ext-status.pending{background:#fef9c3;color:#854d0e}
+.ext-status.approved{background:#d1fae5;color:#065f46}
+.ext-status.rejected{background:#fee2e2;color:#991b1b;margin-bottom:.5rem}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<style>
+/* Стили для модального окна тестирования */
+.test-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 800px;
+    height: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.test-modal-content {
+    background-color: white;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.test-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.test-modal-body {
+    padding: 20px;
+}
+
+.test-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+}
+
+.test-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+}
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.test-result {
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.test-status {
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.test-status i {
+    margin-right: 10px;
+    font-size: 24px;
+}
+
+.test-passed .test-status {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.test-failed .test-status {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.test-error .test-status {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.test-details {
+    padding: 15px;
+    background-color: #f8f9fa;
+}
+
+.test-details > div {
+    margin-bottom: 15px;
+}
+
+.test-details > div:last-child {
+    margin-bottom: 0;
+}
+
+.test-details code {
+    display: block;
+    padding: 10px;
+    background-color: #f1f1f1;
+    border-radius: 4px;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.test-details pre {
+    padding: 10px;
+    background-color: #f1f1f1;
+    border-radius: 4px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 200px;
+    overflow-y: auto;
+}
+</style>
+<script>
+let testModal = null;
+
+function testSolution() {
+    console.log('testSolution вызвана');
+    
+    const codeFile = document.getElementById('code_file');
+    console.log('codeFile элемент:', codeFile);
+    
+    if (!codeFile) {
+        alert('Ошибка: не найден элемент для загрузки файла');
+        return;
+    }
+    
+    if (!codeFile.files || !codeFile.files[0]) {
+        alert('Сначала выберите файл с кодом');
+        return;
+    }
+    
+    console.log('Файл выбран:', codeFile.files[0].name);
+    
+    // Читаем содержимое файла
+    const file = codeFile.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        console.log('Файл прочитан, размер:', e.target.result.length);
+        const codeContent = e.target.result;
+        runLocalTest(codeContent);
+    };
+    
+    reader.onerror = function(e) {
+        console.error('Ошибка чтения файла:', e);
+        alert('Ошибка при чтении файла');
+    };
+    
+    reader.readAsText(file, 'utf-8');
+}
+
+function runLocalTest(codeContent) {
+    console.log('runLocalTest вызвана, размер кода:', codeContent.length);
+    
+    // Показываем модальное окно с тестированием
+    showTestModal();
+    
+    // Отправляем запрос на тестирование
+    const formData = new FormData();
+    formData.append('code', codeContent);
+    
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (!csrfToken) {
+        console.error('CSRF токен не найден');
+        displayTestError('Ошибка: CSRF токен не найден');
+        return;
+    }
+    
+    formData.append('csrfmiddlewaretoken', csrfToken.value);
+    
+    const apiUrl = `/api/test-code/{{ work.id }}/`;
+    console.log('Отправляем запрос на:', apiUrl);
+    
+    fetch(apiUrl, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        console.log('Ответ получен:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Данные получены:', data);
+        displayTestResults(data);
+    })
+    .catch(error => {
+        console.error('Ошибка при тестировании:', error);
+        displayTestError('Ошибка при тестировании: ' + error.message);
+    });
+}
+
+function showTestModal() {
+    // Создаем модальное окно
+    const modalHtml = `
+        <div id="testModal" class="test-modal">
+            <div class="test-modal-content">
+                <div class="test-modal-header">
+                    <h3><i class="fas fa-vial"></i> Локальное тестирование</h3>
+                    <button class="test-modal-close" onclick="closeTestModal()">&times;</button>
+                </div>
+                <div class="test-modal-body">
+                    <div class="test-loading">
+                        <div class="spinner"></div>
+                        <p>Выполняется тестирование...</p>
+                    </div>
+                    <div class="test-results" style="display: none;">
+                        <!-- Результаты тестирования будут здесь -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Удаляем предыдущее модальное окно, если есть
+    const existingModal = document.getElementById('testModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Добавляем новое модальное окно
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    testModal = document.getElementById('testModal');
+}
+
+function displayTestResults(data) {
+    const loading = testModal.querySelector('.test-loading');
+    const results = testModal.querySelector('.test-results');
+    
+    loading.style.display = 'none';
+    results.style.display = 'block';
+    
+    let resultHtml = '';
+    
+    if (data.status === 'success') {
+        const statusClass = data.test_passed ? 'test-passed' : 'test-failed';
+        const statusIcon = data.test_passed ? 'fas fa-check-circle' : 'fas fa-times-circle';
+        const statusText = data.test_passed ? 'Тест пройден!' : 'Тест не пройден';
+        
+        resultHtml = `
+            <div class="test-result ${statusClass}">
+                <div class="test-status">
+                    <i class="${statusIcon}"></i>
+                    <span>${statusText}</span>
+                </div>
+                
+                <div class="test-details">
+                    <div class="test-input">
+                        <strong>Входные данные:</strong>
+                        <code>${data.input}</code>
+                    </div>
+                    
+                    <div class="test-expected">
+                        <strong>Ожидаемый результат:</strong>
+                        <code>${data.expected_output}</code>
+                    </div>
+                    
+                    <div class="test-actual">
+                        <strong>Полученный результат:</strong>
+                        <code>${data.actual_output}</code>
+                    </div>
+                    
+                    ${data.error_output ? `
+                    <div class="test-errors">
+                        <strong>Ошибки:</strong>
+                        <pre>${data.error_output}</pre>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="test-time">
+                        <strong>Время выполнения:</strong>
+                        <span>${data.execution_time}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        resultHtml = `
+            <div class="test-result test-error">
+                <div class="test-status">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Ошибка выполнения</span>
+                </div>
+                <div class="test-details">
+                    <div class="test-error-message">
+                        <strong>Сообщение об ошибке:</strong>
+                        <p>${data.message}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    results.innerHTML = resultHtml;
+}
+
+function displayTestError(message) {
+    const loading = testModal.querySelector('.test-loading');
+    const results = testModal.querySelector('.test-results');
+    
+    loading.style.display = 'none';
+    results.style.display = 'block';
+    
+    results.innerHTML = `
+        <div class="test-result test-error">
+            <div class="test-status">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Ошибка</span>
+            </div>
+            <div class="test-details">
+                <div class="test-error-message">
+                    <p>${message}</p>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function closeTestModal() {
+    if (testModal) {
+        testModal.remove();
+        testModal = null;
+    }
+}
+
+// Закрытие модального окна по клику вне его
+document.addEventListener('click', function(e) {
+    if (testModal && e.target === testModal) {
+        closeTestModal();
+    }
+});
+
+// Отладочная информация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Страница загружена');
+    
+    const codeFile = document.getElementById('code_file');
+    console.log('Элемент code_file найден:', codeFile);
+    
+    const testButton = document.querySelector('button[onclick="testSolution()"]');
+    console.log('Кнопка тестирования найдена:', testButton);
+    
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    console.log('CSRF токен найден:', csrfToken);
+    
+    console.log('Work ID:', {{ work.id }});
+});
+
+function viewSolutionDetails(solutionId) {
+    window.location.href = `/solution/${solutionId}/`;
+}
+
+// Анимация отправки формы
+document.getElementById('solution-form').addEventListener('submit', function(e) {
+    const btn = document.getElementById('submit-btn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
+    btn.disabled = true;
+});
+
+// Переключение секций
+document.querySelectorAll('.toggle-section').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const content = this.closest('.content-section').querySelector('.section-content');
+        content.classList.toggle('collapsed');
+        this.querySelector('i').classList.toggle('fa-chevron-down');
+        this.querySelector('i').classList.toggle('fa-chevron-up');
+    });
+});
+</script>
+{% endblock %}
+        const codeContent = e.target.result;
+        runLocalTest(codeContent);
+    };
+    
+    reader.onerror = function(e) {
+        console.error('Ошибка чтения файла:', e);
+        alert('Ошибка при чтении файла');
+    };
+    
+    reader.readAsText(file, 'utf-8');
+}
+
+function runLocalTest(codeContent) {
+    console.log('runLocalTest вызвана, размер кода:', codeContent.length);
+    
+    // Показываем модальное окно с тестированием
+    showTestModal();
+    
+    // Отправляем запрос на тестирование
+    const formData = new FormData();
+    formData.append('code', codeContent);
+    
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (!csrfToken) {
+        console.error('CSRF токен не найден');
+        displayTestError('Ошибка: CSRF токен не найден');
+        return;
+    }
+    
+    formData.append('csrfmiddlewaretoken', csrfToken.value);
+    
+    const apiUrl = `/api/test-code/{{ work.id }}/`;
+    console.log('Отправляем запрос на:', apiUrl);
+    
+    fetch(apiUrl, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        console.log('Ответ получен:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Данные получены:', data);
+        displayTestResults(data);
+    })
+    .catch(error => {
+        console.error('Ошибка при тестировании:', error);
+        displayTestError('Ошибка при тестировании: ' + error.message);
+    });
+}
+
+function showTestModal() {
+    // Создаем модальное окно
+    const modalHtml = `
+        <div id="testModal" class="test-modal">
+            <div class="test-modal-content">
+                <div class="test-modal-header">
+                    <h3><i class="fas fa-vial"></i> Локальное тестирование</h3>
+                    <button class="test-modal-close" onclick="closeTestModal()">&times;</button>
+                </div>
+                <div class="test-modal-body">
+                    <div class="test-loading">
+                        <div class="spinner"></div>
+                        <p>Выполняется тестирование...</p>
+                    </div>
+                    <div class="test-results" style="display: none;">
+                        <!-- Результаты тестирования будут здесь -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Удаляем предыдущее модальное окно, если есть
+    const existingModal = document.getElementById('testModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Добавляем новое модальное окно
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    testModal = document.getElementById('testModal');
+}
+
+function displayTestResults(data) {
+    const loading = testModal.querySelector('.test-loading');
+    const results = testModal.querySelector('.test-results');
+    
+    loading.style.display = 'none';
+    results.style.display = 'block';
+    
+    let resultHtml = '';
+    
+    if (data.status === 'success') {
+        const statusClass = data.test_passed ? 'test-passed' : 'test-failed';
+        const statusIcon = data.test_passed ? 'fas fa-check-circle' : 'fas fa-times-circle';
+        const statusText = data.test_passed ? 'Тест пройден!' : 'Тест не пройден';
+        
+        resultHtml = `
+            <div class="test-result ${statusClass}">
+                <div class="test-status">
+                    <i class="${statusIcon}"></i>
+                    <span>${statusText}</span>
+                </div>
+                
+                <div class="test-details">
+                    <div class="test-input">
+                        <strong>Входные данные:</strong>
+                        <code>${data.input}</code>
+                    </div>
+                    
+                    <div class="test-expected">
+                        <strong>Ожидаемый результат:</strong>
+                        <code>${data.expected_output}</code>
+                    </div>
+                    
+                    <div class="test-actual">
+                        <strong>Полученный результат:</strong>
+                        <code>${data.actual_output}</code>
+                    </div>
+                    
+                    ${data.error_output ? `
+                    <div class="test-errors">
+                        <strong>Ошибки:</strong>
+                        <pre>${data.error_output}</pre>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="test-time">
+                        <strong>Время выполнения:</strong>
+                        <span>${data.execution_time}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        resultHtml = `
+            <div class="test-result test-error">
+                <div class="test-status">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Ошибка выполнения</span>
+                </div>
+                <div class="test-details">
+                    <div class="test-error-message">
+                        <strong>Сообщение об ошибке:</strong>
+                        <p>${data.message}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    results.innerHTML = resultHtml;
+}
+
+function displayTestError(message) {
+    const loading = testModal.querySelector('.test-loading');
+    const results = testModal.querySelector('.test-results');
+    
+    loading.style.display = 'none';
+    results.style.display = 'block';
+    
+    results.innerHTML = `
+        <div class="test-result test-error">
+            <div class="test-status">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Ошибка</span>
+            </div>
+            <div class="test-details">
+                <div class="test-error-message">
+                    <p>${message}</p>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function closeTestModal() {
+    if (testModal) {
+        testModal.remove();
+        testModal = null;
+    }
+}
+
+// Закрытие модального окна по клику вне его
+document.addEventListener('click', function(e) {
+    if (testModal && e.target === testModal) {
+        closeTestModal();
+    }
+});
+
+// Отладочная информация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Страница загружена');
+    
+    const codeFile = document.getElementById('code_file');
+    console.log('Элемент code_file найден:', codeFile);
+    
+    const testButton = document.querySelector('button[onclick="testSolution()"]');
+    console.log('Кнопка тестирования найдена:', testButton);
+    
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    console.log('CSRF токен найден:', csrfToken);
+    
+    console.log('Work ID:', {{ work.id }});
+});
+
+function viewSolutionDetails(solutionId) {
+    window.location.href = `/solution/${solutionId}/`;
+}
+
+// Анимация отправки формы
+document.getElementById('solution-form').addEventListener('submit', function(e) {
+    const btn = document.getElementById('submit-btn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
+    btn.disabled = true;
+});
+
+// Переключение секций
+document.querySelectorAll('.toggle-section').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const content = this.closest('.content-section').querySelector('.section-content');
+        content.classList.toggle('collapsed');
+        this.querySelector('i').classList.toggle('fa-chevron-down');
+        this.querySelector('i').classList.toggle('fa-chevron-up');
+    });
+});
+</script>

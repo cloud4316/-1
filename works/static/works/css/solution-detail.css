@@ -1,0 +1,477 @@
+/* Стили для страницы решения */
+.solution-detail-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+/* Навигация */
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+
+.breadcrumb-item {
+    color: var(--text-muted);
+}
+
+.breadcrumb-item.active {
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.breadcrumb-divider {
+    margin: 0 0.5rem;
+    color: var(--border-color);
+}
+
+/* Заголовок */
+.solution-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+}
+
+.solution-title h1 {
+    margin-bottom: 0.5rem;
+    font-size: 1.8rem;
+}
+
+.solution-meta {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.status-card {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 8px;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.status-icon {
+    margin-right: 1rem;
+    font-size: 1.5rem;
+}
+
+.status-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.status-text {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.score {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.status-correct .status-icon {
+    color: var(--success-color);
+}
+
+.status-incorrect .status-icon {
+    color: var(--danger-color);
+}
+
+.status-partially_correct .status-icon {
+    color: var(--warning-color);
+}
+
+.status-pending .status-icon {
+    color: var(--info-color);
+}
+
+/* Содержимое */
+.solution-content {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 1.5rem;
+}
+
+.solution-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.detail-card, .comment-card, .tests-card, .code-card, .autocheck-card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+.detail-card h3, .comment-card h3, .tests-card h3, .code-card h3, .autocheck-card h3 {
+    padding: 1rem;
+    margin: 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+}
+
+.detail-card h3 i, .comment-card h3 i, .tests-card h3 i, .code-card h3 i, .autocheck-card h3 i {
+    margin-right: 0.5rem;
+    color: var(--primary-color);
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+}
+
+.value {
+    font-weight: 500;
+}
+
+.value.status-correct {
+    color: var(--success-color);
+}
+
+.value.status-incorrect {
+    color: var(--danger-color);
+}
+
+.value.status-partially_correct {
+    color: var(--warning-color);
+}
+
+.comment-content {
+    padding: 1rem;
+    line-height: 1.6;
+}
+
+/* Тесты */
+.tests-summary {
+    display: flex;
+    justify-content: space-around;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.test-stat {
+    text-align: center;
+}
+
+.stat-number {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.tests-details {
+    padding: 1rem;
+}
+
+.tests-details h4 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.test-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+}
+
+.test-item.passed {
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
+.test-item.failed {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+.test-status {
+    margin-right: 0.75rem;
+    font-size: 1rem;
+}
+
+.test-item.passed .test-status {
+    color: var(--success-color);
+}
+
+.test-item.failed .test-status {
+    color: var(--danger-color);
+}
+
+.test-info {
+    flex: 1;
+}
+
+.test-name {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.test-message {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* Автопроверка */
+.autocheck-card {
+    margin-top: 1.5rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.autocheck-content {
+    padding: 1rem;
+}
+
+.autocheck-actions {
+    margin-bottom: 1rem;
+}
+
+.autocheck-status {
+    text-align: center;
+    padding: 1rem;
+}
+
+.status-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--primary-color);
+}
+
+.autocheck-results {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    background-color: white;
+}
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.check-score {
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: var(--primary-color);
+}
+
+.result-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.result-section {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    padding: 0.75rem;
+}
+
+.result-section h5 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-content {
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Код */
+.code-card {
+    margin-top: 1.5rem;
+}
+
+.code-viewer {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.code-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.filename {
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+.code-content {
+    padding: 1rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.code-placeholder {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+}
+
+.code-placeholder i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+/* Боковая панель */
+.solution-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.sidebar-card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+.sidebar-card h3 {
+    padding: 1rem;
+    margin: 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+}
+
+.sidebar-card h3 i {
+    margin-right: 0.5rem;
+    color: var(--primary-color);
+}
+
+.work-info {
+    padding: 1rem;
+}
+
+.work-info h4 {
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+}
+
+.work-difficulty, .work-max-score {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.work-difficulty i, .work-max-score i {
+    margin-right: 0.5rem;
+}
+
+.difficulty-easy {
+    color: var(--success-color);
+}
+
+.difficulty-medium {
+    color: var(--warning-color);
+}
+
+.difficulty-hard {
+    color: var(--danger-color);
+}
+
+.sidebar-card .btn {
+    margin: 1rem;
+    width: calc(100% - 2rem);
+}
+
+.stats-list {
+    padding: 1rem;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.stat-label {
+    color: var(--text-muted);
+}
+
+.stat-value {
+    font-weight: 500;
+}
+
+/* Адаптивность */
+@media (max-width: 992px) {
+    .solution-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .solution-header {
+        flex-direction: column;
+    }
+    
+    .solution-status {
+        margin-top: 1rem;
+        width: 100%;
+    }
+    
+    .result-sections {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 576px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .tests-summary {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}

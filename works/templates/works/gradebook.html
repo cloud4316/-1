@@ -1,0 +1,109 @@
+{% extends 'works/base.html' %}
+{% block title %}Журнал успеваемости{% endblock %}
+{% block content %}
+<div class="gb-page">
+  <div class="gb-header">
+    <h1><i class="fas fa-book-open"></i> Журнал успеваемости</h1>
+    <div class="gb-actions">
+      <div class="gb-groups">
+        <a href="?{% if False %}export={{ request.GET.export|urlencode }}&amp;{% endif %}" class="gpill {% if not group_filter %}active{% endif %}">Все</a>
+        {% for g in all_groups %}
+        <a href="?group={{ g }}" class="gpill {% if group_filter == g %}active{% endif %}">{{ g }}</a>
+        {% endfor %}
+      </div>
+      <a href="?group={{ group_filter }}&export=csv" class="btn-export">
+        <i class="fas fa-file-csv"></i> Скачать CSV
+      </a>
+    </div>
+  </div>
+
+  <div class="gb-summary">
+    <span><i class="fas fa-users"></i> Студентов: <strong>{{ students|length }}</strong></span>
+    <span><i class="fas fa-tasks"></i> Работ: <strong>{{ works|length }}</strong></span>
+  </div>
+
+  <div class="gb-scroll">
+    <table class="gb-table">
+      <thead>
+        <tr>
+          <th class="sticky-col">Студент</th>
+          <th class="sticky-col2">Группа</th>
+          {% for work in works %}
+          <th title="{{ work.title }}" class="work-col">ПР{{ work.order }}</th>
+          {% endfor %}
+          <th>Среднее</th>
+          <th>Сдано</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in students %}
+        <tr>
+          <td class="sticky-col name-cell">{{ student.last_name }} {{ student.first_name }}</td>
+          <td class="sticky-col2">
+            {% if student.progress.group %}<span class="gbadge">{{ student.progress.group }}</span>{% else %}—{% endif %}
+          </td>
+          {% for cell in student.row %}
+          <td class="score-cell">
+            {% if cell %}
+              {% if cell.status == 'correct' %}
+              <span class="sc correct" title="Зачтено: {{ cell.score }}">{{ cell.score }}</span>
+              {% elif cell.status == 'partially_correct' %}
+              <span class="sc partial" title="Частично: {{ cell.score }}">{{ cell.score }}</span>
+              {% elif cell.status == 'incorrect' %}
+              <span class="sc wrong" title="Не зачтено">✗</span>
+              {% else %}
+              <span class="sc pending" title="{{ cell.status }}">…</span>
+              {% endif %}
+            {% else %}
+              <span class="sc empty">—</span>
+            {% endif %}
+          </td>
+          {% endfor %}
+          <td><strong>{{ student.avg_score }}</strong></td>
+          <td>{{ student.done_count }}/{{ works|length }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="100" style="text-align:center;padding:2rem;color:#9ca3af">Нет студентов</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gb-legend">
+    <span class="sc correct">85</span> Зачтено
+    <span class="sc partial">60</span> Частично
+    <span class="sc wrong">✗</span> Не зачтено
+    <span class="sc pending">…</span> На проверке
+    <span class="sc empty">—</span> Не сдано
+  </div>
+</div>
+<style>
+.gb-page{max-width:100%;padding:1.5rem 1rem}
+.gb-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;margin-bottom:1rem}
+.gb-header h1{font-size:1.5rem;display:flex;align-items:center;gap:.5rem}
+.gb-actions{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+.gb-groups{display:flex;gap:.35rem;flex-wrap:wrap}
+.gpill{padding:.3rem .75rem;border-radius:20px;background:#f3f4f6;color:#374151;text-decoration:none;font-size:.8rem}
+.gpill.active{background:#667eea;color:#fff}
+.btn-export{background:#10b981;color:#fff;text-decoration:none;padding:.4rem .9rem;border-radius:8px;font-size:.85rem;display:flex;align-items:center;gap:.4rem}
+.gb-summary{display:flex;gap:1.5rem;font-size:.88rem;color:#6b7280;margin-bottom:1rem}
+.gb-scroll{overflow-x:auto;border:1px solid #e5e7eb;border-radius:12px}
+.gb-table{border-collapse:collapse;white-space:nowrap;font-size:.82rem;min-width:600px}
+.gb-table th{background:#f9fafb;padding:.5rem .6rem;border-bottom:1px solid #e5e7eb;color:#6b7280;font-weight:600}
+.gb-table td{padding:.45rem .6rem;border-bottom:1px solid #f3f4f6;text-align:center}
+.gb-table tr:last-child td{border-bottom:none}
+.gb-table tr:hover td{background:#f9fafb}
+.sticky-col{position:sticky;left:0;background:#f9fafb;text-align:left;min-width:140px;z-index:1}
+.sticky-col2{position:sticky;left:140px;background:#f9fafb;min-width:70px;z-index:1}
+.name-cell{font-weight:600;color:#1f2937}
+.work-col{min-width:48px;font-size:.75rem}
+.sc{display:inline-block;padding:.15rem .35rem;border-radius:5px;font-size:.78rem;font-weight:600;min-width:24px}
+.sc.correct{background:#d1fae5;color:#065f46}
+.sc.partial{background:#fef9c3;color:#854d0e}
+.sc.wrong{background:#fee2e2;color:#991b1b}
+.sc.pending{background:#f3f4f6;color:#9ca3af}
+.sc.empty{color:#d1d5db}
+.gbadge{background:#eff6ff;color:#1d4ed8;padding:.15rem .5rem;border-radius:20px;font-size:.75rem}
+.gb-legend{display:flex;align-items:center;gap:.75rem;margin-top:.75rem;font-size:.8rem;color:#6b7280;flex-wrap:wrap}
+</style>
+{% endblock %}

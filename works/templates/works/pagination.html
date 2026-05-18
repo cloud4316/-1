@@ -1,0 +1,62 @@
+{% if page_obj.has_other_pages and page_obj.paginator.count > 0 %}
+<div class="pagination-wrapper">
+  <div class="pagination-info">
+    <span class="pagination-text">
+      <i class="fas fa-list"></i>
+      Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+      <span class="pagination-count">({{ page_obj.paginator.count }} работ)</span>
+    </span>
+  </div>
+  <nav class="pagination-nav">
+    <div class="pagination-controls">
+      {% if page_obj.has_previous %}
+        <a href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.difficulty %}&difficulty={{ request.GET.difficulty }}{% endif %}{% if request.GET.topic %}&topic={{ request.GET.topic }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" class="pagination-btn pagination-btn-first" title="Первая страница">
+          <i class="fas fa-angle-double-left"></i>
+        </a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.difficulty %}&difficulty={{ request.GET.difficulty }}{% endif %}{% if request.GET.topic %}&topic={{ request.GET.topic }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" class="pagination-btn pagination-btn-prev" title="Предыдущая страница">
+          <i class="fas fa-angle-left"></i>
+        </a>
+      {% else %}
+        <span class="pagination-btn pagination-btn-disabled">
+          <i class="fas fa-angle-double-left"></i>
+        </span>
+        <span class="pagination-btn pagination-btn-disabled">
+          <i class="fas fa-angle-left"></i>
+        </span>
+      {% endif %}
+    </div>
+
+    <div class="pagination-pages">
+      {% for page_num in page_obj.paginator.page_range %}
+        {% if page_num == page_obj.number %}
+          <span class="pagination-page pagination-page-current">{{ page_num }}</span>
+        {% elif page_num > page_obj.number|add:'-3' and page_num < page_obj.number|add:'3' %}
+          <a href="?page={{ page_num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.difficulty %}&difficulty={{ request.GET.difficulty }}{% endif %}{% if request.GET.topic %}&topic={{ request.GET.topic }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" class="pagination-page">{{ page_num }}</a>
+        {% elif page_num == 1 or page_num == page_obj.paginator.num_pages %}
+          <a href="?page={{ page_num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.difficulty %}&difficulty={{ request.GET.difficulty }}{% endif %}{% if request.GET.topic %}&topic={{ request.GET.topic }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" class="pagination-page">{{ page_num }}</a>
+        {% elif page_num == page_obj.number|add:'-4' or page_num == page_obj.number|add:'4' %}
+          <span class="pagination-ellipsis">...</span>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <div class="pagination-controls">
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.difficulty %}&difficulty={{ request.GET.difficulty }}{% endif %}{% if request.GET.topic %}&topic={{ request.GET.topic }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" class="pagination-btn pagination-btn-next" title="Следующая страница">
+          <i class="fas fa-angle-right"></i>
+        </a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.difficulty %}&difficulty={{ request.GET.difficulty }}{% endif %}{% if request.GET.topic %}&topic={{ request.GET.topic }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" class="pagination-btn pagination-btn-last" title="Последняя страница">
+          <i class="fas fa-angle-double-right"></i>
+        </a>
+      {% else %}
+        <span class="pagination-btn pagination-btn-disabled">
+          <i class="fas fa-angle-right"></i>
+        </span>
+        <span class="pagination-btn pagination-btn-disabled">
+          <i class="fas fa-angle-double-right"></i>
+        </span>
+      {% endif %}
+    </div>
+  </nav>
+</div>
+{% endif %}

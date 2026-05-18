@@ -1,0 +1,790 @@
+{% extends 'works/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="solution-detail-container">
+    <!-- Навигация -->
+    <nav class="breadcrumb">
+        <a href="{% url 'profile' %}" class="breadcrumb-item">
+            <i class="fas fa-arrow-left"></i>
+            Профиль
+        </a>
+        <span class="breadcrumb-divider">/</span>
+        <a href="{% url 'work_detail' solution.work.id %}" class="breadcrumb-item">
+            {{ solution.work.title }}
+        </a>
+        <span class="breadcrumb-divider">/</span>
+        <span class="breadcrumb-item active">Решение от {{ solution.submitted_at|date:"d.m.Y H:i" }}</span>
+    </nav>
+
+    <!-- Заголовок -->
+    <div class="solution-header">
+        <div class="solution-title">
+            <h1>Решение работы "{{ solution.work.title }}"</h1>
+            <p class="solution-meta">
+                Отправлено: {{ solution.submitted_at|date:"d.m.Y H:i" }}
+                {% if solution.execution_time %}
+                • Время выполнения: {{ solution.execution_time|floatformat:2 }}s
+                {% endif %}
+            </p>
+        </div>
+        
+        <div class="solution-status">
+            <div class="status-card status-{{ solution.status }}">
+                <div class="status-icon">
+                    {% if solution.status == 'correct' %}
+                    <i class="fas fa-check-circle"></i>
+                    {% elif solution.status == 'incorrect' %}
+                    <i class="fas fa-times-circle"></i>
+                    {% elif solution.status == 'partially_correct' %}
+                    <i class="fas fa-exclamation-circle"></i>
+                    {% else %}
+                    <i class="fas fa-clock"></i>
+                    {% endif %}
+                </div>
+                <div class="status-content">
+                    <span class="status-text">{{ solution.get_status_display }}</span>
+                    <span class="score">{{ solution.score }}/{{ solution.work.max_score }} баллов</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="solution-content">
+        <!-- Детали решения -->
+        <div class="solution-details">
+            <div class="detail-card">
+                <h3><i class="fas fa-info-circle"></i> Информация о решении</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="label">Файл:</span>
+                        <span class="value">{{ solution.code_file.name }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Статус:</span>
+                        <span class="value status-{{ solution.status }}">{{ solution.get_status_display }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Баллы:</span>
+                        <span class="value">{{ solution.score }}/{{ solution.work.max_score }}</span>
+                    </div>
+                    {% if solution.execution_time %}
+                    <div class="detail-item">
+                        <span class="label">Время выполнения:</span>
+                        <span class="value">{{ solution.execution_time|floatformat:2 }}s</span>
+                    </div>
+                    {% endif %}
+                    {% if solution.memory_usage %}
+                    <div class="detail-item">
+                        <span class="label">Память:</span>
+                        <span class="value">{{ solution.memory_usage|floatformat:2 }} MB</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Комментарий -->
+            {% if solution.comment %}
+            <div class="comment-card">
+                <h3><i class="fas fa-comment"></i> Комментарий проверяющего</h3>
+                <div class="comment-content">
+                    {{ solution.comment|linebreaks }}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Результаты тестов -->
+            {% if solution.test_results and solution.test_results.details %}
+            <div class="tests-card">
+                <h3><i class="fas fa-vial"></i> Результаты тестирования</h3>
+                
+                <div class="tests-summary">
+                    <div class="test-stat">
+                        <span class="stat-number">{{ solution.test_results.passed }}/{{ solution.test_results.total }}</span>
+                        <span class="stat-label">тестов пройдено</span>
+                    </div>
+                    <div class="test-stat">
+                        <span class="stat-number">{{ solution.test_results.passed|floatformat:0 }}%</span>
+                        <span class="stat-label">успешных</span>
+                    </div>
+                </div>
+
+                <div class="tests-details">
+                    <h4>Детали тестов:</h4>
+                    {% for test in solution.test_results.details %}
+                    <div class="test-item {% if test.status == 'passed' %}passed{% else %}failed{% endif %}">
+                        <div class="test-status">
+                            {% if test.status == 'passed' %}
+                            <i class="fas fa-check"></i>
+                            {% else %}
+                            <i class="fas fa-times"></i>
+                            {% endif %}
+                        </div>
+                        <div class="test-info">
+                            <span class="test-name">{{ test.test }}</span>
+                            {% if test.message %}
+                            <span class="test-message">{{ test.message }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Автопроверка кода -->
+            <div class="autocheck-card">
+                <h3><i class="fas fa-robot"></i> Автоматическая проверка</h3>
+                <div class="autocheck-content">
+                    <div class="autocheck-actions">
+                        <button id="start-autocheck" class="btn btn-primary" onclick="startAutoCheck({{ solution.id }})">
+                            <i class="fas fa-check-circle"></i> Запустить автопроверку
+                        </button>
+                    </div>
+                    <div id="autocheck-status" class="autocheck-status" style="display: none;">
+                        <div class="status-spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Проверка кода...</span>
+                        </div>
+                    </div>
+                    <div id="autocheck-results" class="autocheck-results" style="display: none;">
+                        <div class="result-header">
+                            <h4>Результаты проверки</h4>
+                            <span id="check-score" class="check-score">0/100</span>
+                        </div>
+                        <div class="result-sections">
+                            <div id="check-feedback" class="result-section">
+                                <h5><i class="fas fa-comment"></i> Обратная связь</h5>
+                                <div class="section-content"></div>
+                            </div>
+                            <div id="check-suggestions" class="result-section">
+                                <h5><i class="fas fa-lightbulb"></i> Предложения</h5>
+                                <div class="section-content"></div>
+                            </div>
+                            <div id="check-errors" class="result-section">
+                                <h5><i class="fas fa-exclamation-triangle"></i> Ошибки</h5>
+                                <div class="section-content"></div>
+                            </div>
+                            <div id="check-warnings" class="result-section">
+                                <h5><i class="fas fa-exclamation-circle"></i> Предупреждения</h5>
+                                <div class="section-content"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Исходный код -->
+            <div class="code-card">
+                <h3><i class="fas fa-code"></i> Исходный код</h3>
+                <div class="code-viewer">
+                    <div class="code-toolbar">
+                        <span class="filename">{{ solution.code_file.name }}</span>
+                        <a href="{{ solution.code_file.url }}" download class="btn btn-sm btn-outline">
+                            <i class="fas fa-download"></i> Скачать
+                        </a>
+                    </div>
+                    <div class="code-content">
+                        <div class="code-placeholder">
+                            <i class="fas fa-file-code"></i>
+                            <p>Содержимое файла доступно для скачивания</p>
+                            <small>Для просмотра кода скачайте файл</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Боковая панель -->
+        <div class="solution-sidebar">
+            <div class="sidebar-card">
+                <h3><i class="fas fa-tasks"></i> Работа</h3>
+                <div class="work-info">
+                    <h4>{{ solution.work.title }}</h4>
+                    <p class="work-difficulty difficulty-{{ solution.work.difficulty }}">
+                        <i class="fas fa-signal"></i>
+                        {{ solution.work.get_difficulty_display }}
+                    </p>
+                    <p class="work-max-score">
+                        <i class="fas fa-star"></i>
+                        Максимум: {{ solution.work.max_score }} баллов
+                    </p>
+                </div>
+                <a href="{% url 'work_detail' solution.work.id %}" class="btn btn-primary">
+                    <i class="fas fa-arrow-right"></i> Вернуться к работе
+                </a>
+            </div>
+
+            <div class="sidebar-card">
+                <h3><i class="fas fa-chart-bar"></i> Статистика</h3>
+                <div class="stats-list">
+                    <div class="stat-item">
+                        <span class="stat-label">Ваших попыток:</span>
+                        <span class="stat-value">{{ solution.work.solution_set.count }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Лучший результат:</span>
+                        <span class="stat-value">
+                            {% with best=solution.work.solution_set.all|dictsortreversed:"score"|first %}
+                                {{ best.score }}/{{ solution.work.max_score }}
+                            {% endwith %}
+                        </span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Средний балл:</span>
+                        <span class="stat-value">
+                            {% with solutions=solution.work.solution_set.all %}
+                                {% if solutions %}
+                                    {{ solutions|length }}
+                                {% else %}
+                                    0
+                                {% endif %}
+                            {% endwith %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-card">
+                <h3><i class="fas fa-cog"></i> Действия</h3>
+                <div class="action-buttons">
+                    <a href="{% url 'work_detail' solution.work.id %}" class="btn btn-secondary">
+                        <i class="fas fa-redo"></i> Попробовать снова
+                    </a>
+                    <a href="{{ solution.code_file.url }}" download class="btn btn-outline">
+                        <i class="fas fa-download"></i> Скачать решение
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% block extra_js %}
+<script>
+    // Функция для запуска автопроверки
+    function startAutoCheck(solutionId) {
+        // Показываем индикатор загрузки
+        document.getElementById('start-autocheck').disabled = true;
+        document.getElementById('autocheck-status').style.display = 'block';
+        document.getElementById('autocheck-results').style.display = 'none';
+        
+        // Отправляем запрос на сервер
+        fetch('/api/check-code/' + solutionId + '/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Запускаем проверку статуса
+                checkStatus(data.check_id);
+            } else {
+                showError(data.error || 'Не удалось запустить проверку');
+            }
+        })
+        .catch(error => {
+            showError('Ошибка при запуске проверки: ' + error);
+        });
+    }
+    
+    // Функция для проверки статуса автопроверки
+    function checkStatus(checkId) {
+        fetch('/api/check-status/' + checkId + '/', {
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'completed') {
+                showResults(data);
+            } else if (data.status === 'in_progress') {
+                // Продолжаем проверять статус
+                setTimeout(() => checkStatus(checkId), 2000);
+            } else {
+                showError('Ошибка при проверке: ' + (data.error || 'Неизвестная ошибка'));
+            }
+        })
+        .catch(error => {
+            showError('Ошибка при получении статуса: ' + error);
+        });
+    }
+    
+    // Функция для отображения результатов
+    function showResults(data) {
+        document.getElementById('autocheck-status').style.display = 'none';
+        document.getElementById('autocheck-results').style.display = 'block';
+        document.getElementById('start-autocheck').disabled = false;
+        
+        // Обновляем оценку
+        document.getElementById('check-score').textContent = data.score + '/100';
+        
+        // Обновляем секции с результатами
+        updateSection('check-feedback', data.feedback);
+        updateSection('check-suggestions', data.suggestions);
+        updateSection('check-errors', data.errors);
+        updateSection('check-warnings', data.warnings);
+    }
+    
+    // Функция для обновления секции с результатами
+    function updateSection(sectionId, content) {
+        const section = document.getElementById(sectionId);
+        const contentDiv = section.querySelector('.section-content');
+        
+        if (content && content.trim() !== '') {
+            contentDiv.innerHTML = formatContent(content);
+            section.style.display = 'block';
+        } else {
+            contentDiv.innerHTML = '<p>Нет данных</p>';
+            section.style.display = 'none';
+        }
+    }
+    
+    // Функция для форматирования содержимого
+    function formatContent(content) {
+        return content.replace(/\n/g, '<br>');
+    }
+    
+    // Функция для отображения ошибки
+    function showError(message) {
+        document.getElementById('autocheck-status').style.display = 'none';
+        document.getElementById('start-autocheck').disabled = false;
+        alert('Ошибка: ' + message);
+    }
+    
+    // Функция для получения CSRF токена из cookies
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.solution-detail-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 30px;
+    font-size: 14px;
+}
+
+.breadcrumb-item {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.breadcrumb-divider {
+    color: var(--gray);
+}
+
+.breadcrumb-item.active {
+    color: var(--dark);
+    font-weight: 500;
+}
+
+.solution-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    gap: 20px;
+}
+
+.solution-title h1 {
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+    color: var(--dark);
+}
+
+.solution-meta {
+    color: var(--gray);
+    font-size: 0.9rem;
+}
+
+.status-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    border-radius: var(--radius);
+    background: white;
+    box-shadow: var(--shadow);
+    min-width: 250px;
+}
+
+.status-card.correct { border-left: 4px solid var(--success); }
+.status-card.incorrect { border-left: 4px solid var(--danger); }
+.status-card.partially_correct { border-left: 4px solid var(--warning); }
+.status-card.checking { border-left: 4px solid var(--primary); }
+
+.status-icon {
+    font-size: 2rem;
+}
+
+.status-icon .fa-check-circle { color: var(--success); }
+.status-icon .fa-times-circle { color: var(--danger); }
+.status-icon .fa-exclamation-circle { color: var(--warning); }
+.status-icon .fa-clock { color: var(--primary); }
+
+.status-content {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.status-text {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.score {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.solution-content {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 30px;
+}
+
+.solution-details {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.detail-card, .comment-card, .tests-card, .code-card {
+    background: white;
+    padding: 25px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.detail-card h3, .comment-card h3, .tests-card h3, .code-card h3 {
+    margin-bottom: 20px;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.label {
+    font-size: 0.9rem;
+    color: var(--gray);
+    font-weight: 500;
+}
+
+.value {
+    font-weight: 600;
+    color: var(--dark);
+}
+
+.value.status-correct { color: var(--success); }
+.value.status-incorrect { color: var(--danger); }
+.value.status-partially_correct { color: var(--warning); }
+
+.comment-content {
+    line-height: 1.6;
+    color: var(--dark);
+}
+
+.tests-summary {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: var(--light);
+    border-radius: var(--radius);
+}
+
+.test-stat {
+    text-align: center;
+}
+
+.stat-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--gray);
+}
+
+.tests-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.test-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    border-radius: var(--radius);
+    background: var(--light);
+}
+
+.test-item.passed { border-left: 4px solid var(--success); }
+.test-item.failed { border-left: 4px solid var(--danger); }
+
+.test-status {
+    font-size: 1.2rem;
+}
+
+.test-item.passed .test-status { color: var(--success); }
+.test-item.failed .test-status { color: var(--danger); }
+
+.test-info {
+    flex: 1;
+}
+
+.test-name {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.test-message {
+    font-size: 0.9rem;
+    color: var(--gray);
+}
+
+.code-viewer {
+    border: 1px solid var(--gray-light);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.code-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: var(--light);
+    border-bottom: 1px solid var(--gray-light);
+}
+
+.filename {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.9rem;
+    color: var(--gray);
+}
+
+.code-placeholder {
+    padding: 40px;
+    text-align: center;
+    color: var(--gray);
+}
+
+.code-placeholder i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    color: var(--gray-light);
+}
+
+.code-placeholder p {
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.solution-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.sidebar-card {
+    background: white;
+    padding: 20px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.sidebar-card h3 {
+    margin-bottom: 15px;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.work-info h4 {
+    margin-bottom: 10px;
+    color: var(--dark);
+}
+
+.work-difficulty, .work-max-score {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.difficulty-easy { color: var(--success); }
+.difficulty-medium { color: var(--warning); }
+.difficulty-hard { color: var(--danger); }
+
+.stats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--gray-light);
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--gray);
+}
+
+.stat-value {
+    font-weight: 600;
+    color: var(--dark);
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 2px solid var(--gray-light);
+    color: var(--dark);
+}
+
+.btn-outline:hover {
+    background: var(--gray-light);
+}
+
+/* Адаптивность */
+@media (max-width: 968px) {
+    .solution-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .solution-header {
+        flex-direction: column;
+    }
+    
+    .status-card {
+        width: 100%;
+    }
+    
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .solution-detail-container {
+        padding: 15px;
+    }
+    
+    .solution-title h1 {
+        font-size: 1.8rem;
+    }
+    
+    .tests-summary {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .test-stat {
+        text-align: left;
+    }
+}
+
+@media (max-width: 480px) {
+    .breadcrumb {
+        flex-wrap: wrap;
+    }
+    
+    .detail-card, .comment-card, .tests-card, .code-card {
+        padding: 20px;
+    }
+    
+    .code-toolbar {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function downloadSolution() {
+    const link = document.createElement('a');
+    link.href = "{{ solution.code_file.url }}";
+    link.download = "{{ solution.code_file.name }}";
+    link.click();
+}
+
+// Плавная прокрутка к секциям
+document.addEventListener('DOMContentLoaded', function() {
+    const hash = window.location.hash;
+    if (hash) {
+        const element = document.querySelector(hash);
+        if (element) {
+            setTimeout(() => {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+    }
+});
+</script>
+{% endblock %}

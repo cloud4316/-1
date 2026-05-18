@@ -1,0 +1,160 @@
+{% extends 'works/base.html' %}
+{% block title %}Панель преподавателя{% endblock %}
+{% block content %}
+<div class="ap-page">
+  <div class="ap-header">
+    <h1><i class="fas fa-chalkboard-teacher"></i> Панель преподавателя</h1>
+    <div class="ap-stats">
+      <div class="ap-stat warn">
+        <span class="ap-stat-num">{{ pending|length }}</span>
+        <span class="ap-stat-lbl">Ожидают одобрения</span>
+      </div>
+      <div class="ap-stat ok">
+        <span class="ap-stat-num">{{ approved|length }}</span>
+        <span class="ap-stat-lbl">Активных студентов</span>
+      </div>
+    </div>
+  </div>
+
+  {% if messages %}
+  {% for msg in messages %}
+  <div class="ap-alert ap-alert-{{ msg.tags }}"><i class="fas fa-check-circle"></i> {{ msg }}</div>
+  {% endfor %}
+  {% endif %}
+
+  <!-- Ожидают одобрения -->
+  {% if pending %}
+  <section class="ap-section">
+    <h2 class="ap-section-title"><i class="fas fa-clock" style="color:#d97706"></i> Ожидают одобрения</h2>
+    <div class="ap-table-wrap">
+      <table class="ap-table">
+        <thead>
+          <tr><th>Студент</th><th>Группа</th><th>Дата заявки</th><th>Действия</th></tr>
+        </thead>
+        <tbody>
+          {% for user in pending %}
+          <tr>
+            <td>
+              <div class="student-name">{{ user.last_name }} {{ user.first_name }}</div>
+            </td>
+            <td>
+              {% with prog=user.userprogress %}
+                {% if prog.group %}<span class="group-badge">{{ prog.group }}</span>{% else %}—{% endif %}
+              {% endwith %}
+            </td>
+            <td>{{ user.date_joined|date:"d.m.Y H:i" }}</td>
+            <td class="action-cell">
+              <form method="post" action="{% url 'approve_user' user.id %}" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="btn-approve" title="Одобрить">
+                  <i class="fas fa-check"></i> Одобрить
+                </button>
+              </form>
+              <form method="post" action="{% url 'reject_user' user.id %}" style="display:inline"
+                    onsubmit="return confirm('Отклонить заявку {{ user.last_name }} {{ user.first_name }}?')">
+                {% csrf_token %}
+                <button type="submit" class="btn-reject" title="Отклонить">
+                  <i class="fas fa-times"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% else %}
+  <div class="ap-empty"><i class="fas fa-check-double"></i> Нет заявок на одобрение</div>
+  {% endif %}
+
+  <!-- Активные студенты -->
+  <section class="ap-section">
+    <div class="ap-section-header">
+      <h2 class="ap-section-title"><i class="fas fa-users" style="color:#059669"></i> Активные студенты</h2>
+      <input type="text" id="searchInput" placeholder="Поиск по имени или группе…" class="ap-search">
+    </div>
+    {% if approved %}
+    <div class="ap-table-wrap">
+      <table class="ap-table" id="approvedTable">
+        <thead>
+          <tr><th>Студент</th><th>Группа</th><th>Решений</th><th>Ср. балл</th><th>Действия</th></tr>
+        </thead>
+        <tbody>
+          {% for user in approved %}
+          <tr>
+            <td><div class="student-name">{{ user.last_name }} {{ user.first_name }}</div></td>
+            <td>
+              {% if user.progress and user.progress.group %}
+                <span class="group-badge">{{ user.progress.group|default:'—' }}</span>
+              {% else %}—{% endif %}
+            </td>
+            <td>{{ user.progress.completed_works|default:0 }}</td>
+            <td>
+              {% if user.progress and user.progress.average_score %}
+                {{ user.progress.average_score|floatformat:1 }}
+              {% else %}—{% endif %}
+            </td>
+            <td class="action-cell">
+              <form method="post" action="{% url 'deactivate_user' user.id %}" style="display:inline"
+                    onsubmit="return confirm('Заблокировать {{ user.last_name }} {{ user.first_name }}?')">
+                {% csrf_token %}
+                <button type="submit" class="btn-block" title="Заблокировать">
+                  <i class="fas fa-ban"></i> Блокировать
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="ap-empty"><i class="fas fa-user-slash"></i> Нет активных студентов</div>
+    {% endif %}
+  </section>
+</div>
+
+<script>
+document.getElementById('searchInput').addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  document.querySelectorAll('#approvedTable tbody tr').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+});
+</script>
+
+<style>
+.ap-page{max-width:1000px;margin:0 auto;padding:2rem 1rem}
+.ap-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem}
+.ap-header h1{font-size:1.6rem;display:flex;align-items:center;gap:.5rem}
+.ap-stats{display:flex;gap:.75rem}
+.ap-stat{padding:.75rem 1.25rem;border-radius:12px;text-align:center;display:flex;flex-direction:column}
+.ap-stat.warn{background:#fff7ed;color:#92400e}
+.ap-stat.ok{background:#d1fae5;color:#065f46}
+.ap-stat-num{font-size:1.8rem;font-weight:700;line-height:1}
+.ap-stat-lbl{font-size:.75rem;margin-top:.2rem}
+.ap-alert{border-radius:8px;padding:.7rem 1rem;margin-bottom:1rem;font-size:.88rem;display:flex;align-items:center;gap:.5rem}
+.ap-alert-success{background:#d1fae5;color:#065f46}
+.ap-section{margin-bottom:2rem}
+.ap-section-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:.75rem}
+.ap-section-title{font-size:1.15rem;display:flex;align-items:center;gap:.5rem;margin:0 0 .75rem}
+.ap-section-header .ap-section-title{margin:0}
+.ap-search{padding:.45rem .8rem;border:1.5px solid #e5e7eb;border-radius:8px;font-size:.85rem;width:220px}
+.ap-table-wrap{border:1px solid #e5e7eb;border-radius:12px;overflow:hidden}
+.ap-table{width:100%;border-collapse:collapse;font-size:.88rem}
+.ap-table th{background:#f9fafb;padding:.65rem 1rem;text-align:left;font-weight:600;color:#374151;border-bottom:1px solid #e5e7eb}
+.ap-table td{padding:.65rem 1rem;border-bottom:1px solid #f3f4f6;vertical-align:middle}
+.ap-table tr:last-child td{border-bottom:none}
+.ap-table tr:hover td{background:#f9fafb}
+.student-name{font-weight:600;color:#1f2937}
+.group-badge{background:#eff6ff;color:#1d4ed8;padding:.2rem .6rem;border-radius:20px;font-size:.78rem;font-weight:500}
+.action-cell{display:flex;gap:.4rem;align-items:center}
+.btn-approve{background:#10b981;color:#fff;border:none;padding:.4rem .8rem;border-radius:6px;cursor:pointer;font-size:.82rem;display:flex;align-items:center;gap:.35rem;font-weight:500}
+.btn-reject{background:#fee2e2;color:#dc2626;border:none;padding:.4rem .7rem;border-radius:6px;cursor:pointer;font-size:.82rem}
+.btn-block{background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;padding:.4rem .75rem;border-radius:6px;cursor:pointer;font-size:.82rem;display:flex;align-items:center;gap:.35rem}
+.btn-block:hover{background:#fee2e2;color:#dc2626;border-color:#fca5a5}
+.ap-empty{text-align:center;padding:2rem;color:#9ca3af;font-size:.9rem}
+.ap-empty i{display:block;font-size:2rem;margin-bottom:.5rem}
+</style>
+{% endblock %}

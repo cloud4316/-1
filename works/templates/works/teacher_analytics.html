@@ -1,0 +1,238 @@
+{% extends 'works/base.html' %}
+{% block title %}Аналитика успеваемости{% endblock %}
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+<div class="an-page">
+  <div class="an-header">
+    <h1><i class="fas fa-chart-bar"></i> Аналитика успеваемости</h1>
+    <div class="an-filters">
+      <a href="?" class="gpill {% if not group_filter %}active{% endif %}">Все</a>
+      {% for g in all_groups %}
+      <a href="?group={{ g }}" class="gpill {% if group_filter == g %}active{% endif %}">{{ g }}</a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Общие показатели -->
+  <div class="stat-cards">
+    <div class="stat-card blue"><div class="sv">{{ total_students }}</div><div class="sl">Студентов</div></div>
+    <div class="stat-card green"><div class="sv">{{ avg_score_all }}</div><div class="sl">Средний балл</div></div>
+    <div class="stat-card yellow"><div class="sv">{{ total_solutions }}</div><div class="sl">Решений сдано</div></div>
+    <div class="stat-card purple"><div class="sv">{{ pass_rate_all }}%</div><div class="sl">Процент зачёта</div></div>
+  </div>
+
+  <div class="charts-grid">
+    <!-- График: средний балл по работам -->
+    <div class="chart-card">
+      <h3><i class="fas fa-tasks"></i> Средний балл по практическим работам</h3>
+      <canvas id="worksChart" height="200"></canvas>
+    </div>
+
+    <!-- График: активность по дням -->
+    <div class="chart-card">
+      <h3><i class="fas fa-calendar-alt"></i> Активность за 7 дней (решений)</h3>
+      <canvas id="activityChart" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- Самые сложные задания -->
+  {% if hardest %}
+  <div class="hardest-section">
+    <h3><i class="fas fa-exclamation-circle" style="color:#ef4444"></i> Самые сложные задания</h3>
+    <div class="hardest-list">
+      {% for s in hardest %}
+      <div class="hardest-card">
+        <div class="hardest-rank">{{ forloop.counter }}</div>
+        <div class="hardest-info">
+          <div class="hardest-title">{{ s.work.title }}</div>
+          <div class="hardest-stats">
+            <span>Решений: {{ s.total }}</span>
+            <span>Зачтено: {{ s.passed }}</span>
+            <span class="pass-rate {% if s.pass_rate < 30 %}rate-low{% elif s.pass_rate < 60 %}rate-mid{% else %}rate-ok{% endif %}">{{ s.pass_rate }}% зачёта</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Таблица по всем работам -->
+  <div class="works-table-wrap">
+    <h3><i class="fas fa-table"></i> Статистика по всем работам</h3>
+    <table class="works-table">
+      <thead><tr><th>Работа</th><th>Ср. балл</th><th>Решений</th><th>Зачтено</th><th>% зачёта</th><th>Сложность</th></tr></thead>
+      <tbody>
+        {% for s in work_stats %}
+        <tr>
+          <td>{{ s.work.title|truncatechars:45 }}</td>
+          <td class="tc"><strong>{{ s.avg_score }}</strong></td>
+          <td class="tc">{{ s.total }}</td>
+          <td class="tc">{{ s.passed }}</td>
+          <td class="tc">
+            <span class="pr-badge {% if s.pass_rate >= 70 %}pr-ok{% elif s.pass_rate >= 40 %}pr-mid{% else %}pr-low{% endif %}">
+              {{ s.pass_rate }}%
+            </span>
+          </td>
+          <td class="tc">
+            <span class="diff-{{ s.work.difficulty }}">{{ s.work.get_difficulty_display }}</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Аналитика ошибок -->
+  {% if error_works %}
+  <div class="error-section">
+    <h3><i class="fas fa-bug" style="color:#dc2626"></i> Задания с наибольшим числом ошибок</h3>
+    <div class="error-works-list">
+      {% for ew in error_works %}
+      <div class="error-work-card">
+        <div class="ew-rank">{{ forloop.counter }}</div>
+        <div class="ew-info">
+          <div class="ew-title">{{ ew.work__title|truncatechars:50 }}</div>
+          <div class="ew-cnt">{{ ew.cnt }} неверных решений</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if top_errors %}
+  <div class="error-section">
+    <h3><i class="fas fa-exclamation-triangle" style="color:#d97706"></i> Типичные ошибки в коде</h3>
+    <div class="top-errors-list">
+      {% for err, cnt in top_errors %}
+      <div class="top-error-row">
+        <span class="te-cnt">{{ cnt }}×</span>
+        <code class="te-msg">{{ err }}</code>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="export-row">
+    <a href="{% url 'teacher_solutions' %}" class="btn-nav"><i class="fas fa-file-code"></i> Все решения</a>
+    <a href="{% url 'gradebook' %}" class="btn-nav"><i class="fas fa-book-open"></i> Журнал</a>
+    <a href="{% url 'export_gradebook_excel' %}{% if group_filter %}?group={{ group_filter }}{% endif %}" class="btn-excel">
+      <i class="fas fa-file-excel"></i> Скачать Excel
+    </a>
+  </div>
+</div>
+
+<script>
+// График средних баллов по работам
+const worksCtx = document.getElementById('worksChart').getContext('2d');
+new Chart(worksCtx, {
+  type: 'bar',
+  data: {
+    labels: [{% for s in work_stats %}"ПР{{ s.work.order }}"{% if not forloop.last %},{% endif %}{% endfor %}],
+    datasets: [{
+      label: 'Средний балл',
+      data: [{% for s in work_stats %}{{ s.avg_score }}{% if not forloop.last %},{% endif %}{% endfor %}],
+      backgroundColor: 'rgba(102,126,234,0.7)',
+      borderColor: 'rgba(102,126,234,1)',
+      borderWidth: 1,
+      borderRadius: 4,
+    }, {
+      label: '% зачёта',
+      data: [{% for s in work_stats %}{{ s.pass_rate }}{% if not forloop.last %},{% endif %}{% endfor %}],
+      backgroundColor: 'rgba(16,185,129,0.5)',
+      borderColor: 'rgba(16,185,129,1)',
+      borderWidth: 1,
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'top' } },
+    scales: { y: { beginAtZero: true, max: 100 } }
+  }
+});
+
+// График активности
+const actCtx = document.getElementById('activityChart').getContext('2d');
+new Chart(actCtx, {
+  type: 'line',
+  data: {
+    labels: [{% for d in days %}"{{ d.date }}"{% if not forloop.last %},{% endif %}{% endfor %}],
+    datasets: [{
+      label: 'Решений сдано',
+      data: [{% for d in days %}{{ d.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+      fill: true,
+      backgroundColor: 'rgba(102,126,234,0.15)',
+      borderColor: 'rgba(102,126,234,1)',
+      borderWidth: 2,
+      tension: 0.4,
+      pointRadius: 5,
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+  }
+});
+</script>
+
+<style>
+.an-page{max-width:1100px;margin:0 auto;padding:2rem 1rem}
+.an-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem}
+.an-header h1{font-size:1.6rem;display:flex;align-items:center;gap:.5rem;margin:0}
+.an-filters{display:flex;gap:.35rem;flex-wrap:wrap}
+.gpill{padding:.3rem .75rem;border-radius:20px;background:#f3f4f6;color:#374151;text-decoration:none;font-size:.82rem}
+.gpill.active{background:#667eea;color:#fff}
+.stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+.stat-card{border-radius:12px;padding:1.25rem;text-align:center}
+.stat-card.blue{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+.stat-card.green{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
+.stat-card.yellow{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff}
+.stat-card.purple{background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff}
+.sv{font-size:2rem;font-weight:700;line-height:1}
+.sl{font-size:.8rem;opacity:.85;margin-top:.3rem}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+.chart-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:1.25rem}
+.chart-card h3{font-size:.95rem;margin:0 0 1rem;color:#374151;display:flex;align-items:center;gap:.4rem}
+.hardest-section{margin-bottom:1.5rem}
+.hardest-section h3{font-size:1rem;margin-bottom:.75rem;display:flex;align-items:center;gap:.4rem}
+.hardest-list{display:flex;flex-direction:column;gap:.5rem}
+.hardest-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:.85rem 1rem;display:flex;align-items:center;gap:.85rem}
+.hardest-rank{width:28px;height:28px;border-radius:50%;background:#fee2e2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;flex-shrink:0}
+.hardest-title{font-size:.9rem;font-weight:600;margin-bottom:.25rem}
+.hardest-stats{display:flex;gap:.75rem;font-size:.8rem;color:#6b7280}
+.rate-low{color:#dc2626;font-weight:600}
+.rate-mid{color:#d97706;font-weight:600}
+.rate-ok{color:#059669;font-weight:600}
+.works-table-wrap{background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;margin-bottom:1.5rem}
+.works-table-wrap h3{font-size:.95rem;padding:1rem 1.25rem;margin:0;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:.4rem}
+.works-table{width:100%;border-collapse:collapse;font-size:.88rem}
+.works-table th{background:#f9fafb;padding:.6rem 1rem;text-align:left;font-weight:600;color:#6b7280;border-bottom:1px solid #e5e7eb}
+.works-table td{padding:.55rem 1rem;border-bottom:1px solid #f3f4f6}
+.works-table tr:last-child td{border:none}
+.tc{text-align:center}
+.pr-badge{padding:.2rem .6rem;border-radius:20px;font-size:.78rem;font-weight:600}
+.pr-ok{background:#d1fae5;color:#065f46}
+.pr-mid{background:#fef9c3;color:#854d0e}
+.pr-low{background:#fee2e2;color:#991b1b}
+.export-row{display:flex;gap:.75rem;flex-wrap:wrap}
+.btn-nav,.btn-excel{display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1.25rem;border-radius:8px;text-decoration:none;font-size:.9rem;font-weight:500}
+.btn-nav{background:#f3f4f6;color:#374151}
+.btn-excel{background:#1d6f42;color:#fff}
+@media(max-width:768px){.stat-cards{grid-template-columns:repeat(2,1fr)}.charts-grid{grid-template-columns:1fr}}
+.error-section{margin-bottom:1.5rem}
+.error-section h3{font-size:.95rem;margin:0 0 .75rem;display:flex;align-items:center;gap:.4rem}
+.error-works-list,.top-errors-list{display:flex;flex-direction:column;gap:.5rem}
+.error-work-card{background:#fff;border:1px solid #fee2e2;border-radius:10px;padding:.75rem 1rem;display:flex;align-items:center;gap:.75rem}
+.ew-rank{width:28px;height:28px;border-radius:50%;background:#fee2e2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.82rem;flex-shrink:0}
+.ew-title{font-size:.88rem;font-weight:600}
+.ew-cnt{font-size:.78rem;color:#6b7280}
+.top-error-row{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:.5rem .85rem;display:flex;align-items:center;gap:.75rem}
+.te-cnt{background:#fef3c7;color:#92400e;padding:.15rem .5rem;border-radius:12px;font-size:.78rem;font-weight:700;white-space:nowrap;flex-shrink:0}
+.te-msg{font-family:monospace;font-size:.82rem;color:#374151;word-break:break-all}
+</style>
+{% endblock %}
