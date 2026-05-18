@@ -773,6 +773,23 @@
     }
 }
 
+/* ── Circuit launcher ───────────────────────────────────────────────────── */
+.circuit-launch-block {
+    margin-top: 1.5rem;
+    border: 1.5px dashed #c7d2fe;
+    border-radius: 10px;
+    background: #f0f4ff;
+    padding: 1rem 1.25rem;
+}
+.circuit-launch-inner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+body.dark-mode .circuit-launch-block { background: #1e1b4b; border-color: #3730a3; }
+body.dark-mode .circuit-launch-inner div { color: #e2e8f0 !important; }
+
 /* ── Tinkercad embed ─────────────────────────────────────────────────────── */
 .tinkercad-block {
     margin-top: 1.5rem;

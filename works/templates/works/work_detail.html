@@ -130,6 +130,21 @@
                 </div>
                 {% endif %}
 
+                {% if work.subject.slug == 'mcu' or work.subject == None %}
+                <div class="circuit-launch-block">
+                    <div class="circuit-launch-inner">
+                        <i class="fas fa-project-diagram" style="font-size:1.4rem;color:#667eea"></i>
+                        <div>
+                            <div style="font-weight:600;margin-bottom:.15rem">Конструктор схем</div>
+                            <div style="font-size:.82rem;color:#6b7280">Собери схему с Arduino, резисторами, LED и другими компонентами</div>
+                        </div>
+                        <a href="{% url 'circuit_editor' work.id %}" target="_blank" class="btn btn-primary" style="margin-left:auto;white-space:nowrap">
+                            <i class="fas fa-microchip"></i> Открыть конструктор
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+
                 {% if work.tinkercad_url %}
                 <div class="tinkercad-block">
                     <div class="tinkercad-header">

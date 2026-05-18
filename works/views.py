@@ -18,7 +18,8 @@ from .models import (PracticalWork, Solution, UserProgress, UserSession, PageVie
                      Quiz, Question, AnswerChoice, QuizAttempt,
                      Notification, TeacherComment,
                      Achievement, UserAchievement, WorkHint, UserHintUnlock,
-                     DeadlineExtension, Subject, Announcement)
+                     DeadlineExtension, Subject, Announcement,
+                     CircuitDraft, CircuitSolution)
 from .code_runner import run_python_code, run_java_code, run_cpp_code, run_javascript_code
 from .ai_checker import AICodeChecker
 from .forms import SolutionForm, RegistrationForm, FullNameLoginForm, generate_username
@@ -1789,3 +1790,141 @@ def get_module_unlock_status(user, modules):
             }
         prev_passed = module.id in passed_quiz_modules
     return status
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# КОНСТРУКТОР СХЕМ
+# ══════════════════════════════════════════════════════════════════════════════
+
+@login_required
+def circuit_editor(request, work_id):
+    """Открыть редактор схем для задания."""
+    work = get_object_or_404(PracticalWork, id=work_id, is_active=True)
+    draft = CircuitDraft.objects.filter(student=request.user, work=work).first()
+    initial_json = draft.circuit_json if draft else 'null'
+    return render(request, 'works/circuit_editor.html', {
+        'work': work,
+        'initial_json': initial_json,
+        'readonly': False,
+    })
+
+
+@login_required
+def circuit_editor_free(request):
+    """Свободный редактор без привязки к заданию."""
+    return render(request, 'works/circuit_editor.html', {
+        'work': None,
+        'initial_json': 'null',
+        'readonly': False,
+    })
+
+
+@login_required
+@require_http_methods(['POST'])
+def circuit_save(request, work_id):
+    """Автосохранение черновика схемы (AJAX)."""
+    work = get_object_or_404(PracticalWork, id=work_id, is_active=True)
+    try:
+        body = request.body.decode('utf-8')
+        json.loads(body)  # validate JSON
+    except Exception:
+        return JsonResponse({'status': 'error', 'msg': 'invalid json'}, status=400)
+    draft, _ = CircuitDraft.objects.get_or_create(
+        student=request.user, work=work,
+        defaults={'circuit_json': body}
+    )
+    draft.circuit_json = body
+    draft.save(update_fields=['circuit_json', 'updated_at'])
+    return JsonResponse({'status': 'ok', 'saved_at': draft.updated_at.strftime('%H:%M:%S')})
+
+
+@login_required
+@require_http_methods(['POST'])
+def circuit_submit(request, work_id):
+    """Сдать схему как решение."""
+    work = get_object_or_404(PracticalWork, id=work_id, is_active=True)
+    circuit_json = request.POST.get('circuit_json', '{}')
+    comment      = request.POST.get('comment', '')
+    try:
+        json.loads(circuit_json)
+    except Exception:
+        messages.error(request, 'Некорректные данные схемы.')
+        return redirect('circuit_editor', work_id=work_id)
+
+    sol = CircuitSolution.objects.create(
+        student=request.user, work=work,
+        circuit_json=circuit_json, comment=comment,
+        status='submitted',
+    )
+    # Уведомление преподавателям
+    for teacher in User.objects.filter(is_staff=True, is_active=True):
+        Notification.objects.create(
+            user=teacher,
+            title=f'Новая схема от {request.user.last_name} {request.user.first_name}',
+            message=f'Работа «{work.title}» — схема отправлена на проверку.',
+            notification_type='submission',
+        )
+    messages.success(request, 'Схема отправлена на проверку!')
+    return redirect('circuit_solution_detail', sol_id=sol.id)
+
+
+@login_required
+def circuit_solution_detail(request, sol_id):
+    """Просмотр сданной схемы студентом."""
+    sol = get_object_or_404(CircuitSolution, id=sol_id)
+    if sol.student != request.user and not request.user.is_staff:
+        return redirect('home')
+    return render(request, 'works/circuit_editor.html', {
+        'work': sol.work,
+        'initial_json': sol.circuit_json,
+        'readonly': True,
+        'solution': sol,
+    })
+
+
+@login_required
+def circuit_review(request, sol_id):
+    """Преподаватель проверяет и оценивает схему."""
+    if not request.user.is_staff:
+        return redirect('home')
+    sol = get_object_or_404(CircuitSolution, id=sol_id)
+    if request.method == 'POST':
+        status   = request.POST.get('status', 'reviewed')
+        score    = int(request.POST.get('score', 0))
+        comment  = request.POST.get('teacher_comment', '')
+        sol.status = status
+        sol.score  = min(score, sol.work.max_score)
+        sol.teacher_comment = comment
+        sol.reviewed_at = timezone.now()
+        sol.save()
+        Notification.objects.create(
+            user=sol.student,
+            title=f'Схема проверена: {sol.work.title}',
+            message=f'Статус: {sol.get_status_display()}. Баллы: {sol.score}/{sol.work.max_score}.'
+                    + (f'\nКомментарий: {comment}' if comment else ''),
+            notification_type='grade',
+        )
+        messages.success(request, 'Оценка сохранена.')
+        return redirect('circuit_solutions_list')
+    return render(request, 'works/circuit_editor.html', {
+        'work': sol.work,
+        'initial_json': sol.circuit_json,
+        'readonly': True,
+        'solution': sol,
+        'review_mode': True,
+    })
+
+
+@login_required
+def circuit_solutions_list(request):
+    """Список всех сданных схем для преподавателя."""
+    if not request.user.is_staff:
+        return redirect('home')
+    sols = CircuitSolution.objects.select_related('student', 'work').order_by('-submitted_at')
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        sols = sols.filter(status=status_filter)
+    return render(request, 'works/circuit_solutions_list.html', {
+        'solutions': sols[:100],
+        'status_filter': status_filter,
+    })

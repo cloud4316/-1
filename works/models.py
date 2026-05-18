@@ -304,6 +304,56 @@ class TheoryLesson(models.Model):
         return f'{self.module.title} → {self.title}'
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# КОНСТРУКТОР СХЕМ
+# ══════════════════════════════════════════════════════════════════════════════
+
+class CircuitDraft(models.Model):
+    """Черновик схемы — сохраняется автоматически при работе студента."""
+    student    = models.ForeignKey(User, on_delete=models.CASCADE, related_name='circuit_drafts')
+    work       = models.ForeignKey('PracticalWork', on_delete=models.CASCADE,
+                                   related_name='circuit_drafts')
+    circuit_json = models.TextField(default='{}', verbose_name='JSON схемы')
+    updated_at   = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('student', 'work')
+        verbose_name = 'Черновик схемы'
+        verbose_name_plural = 'Черновики схем'
+
+    def __str__(self):
+        return f'{self.student} / {self.work}'
+
+
+class CircuitSolution(models.Model):
+    """Сданная схема как решение практической работы."""
+    STATUS_CHOICES = [
+        ('submitted',  'Сдано'),
+        ('reviewed',   'Проверено'),
+        ('correct',    'Зачтено'),
+        ('incorrect',  'Не зачтено'),
+    ]
+    student      = models.ForeignKey(User, on_delete=models.CASCADE,
+                                     related_name='circuit_solutions')
+    work         = models.ForeignKey('PracticalWork', on_delete=models.CASCADE,
+                                     related_name='circuit_solutions')
+    circuit_json = models.TextField(verbose_name='JSON схемы')
+    status       = models.CharField(max_length=20, choices=STATUS_CHOICES, default='submitted')
+    score        = models.IntegerField(default=0, verbose_name='Балл')
+    comment      = models.TextField(blank=True, verbose_name='Комментарий студента')
+    teacher_comment = models.TextField(blank=True, verbose_name='Комментарий преподавателя')
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at  = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-submitted_at']
+        verbose_name = 'Решение схемы'
+        verbose_name_plural = 'Решения схем'
+
+    def __str__(self):
+        return f'{self.student} / {self.work} — {self.get_status_display()}'
+
+
 class LessonProgress(models.Model):
     """Отметка о прочитанном уроке + конспект"""
     user       = models.ForeignKey(User, on_delete=models.CASCADE)
