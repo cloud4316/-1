@@ -1,0 +1,150 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Конструктор схем{% if work %} — {{ work.title }}{% endif %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'works/css/circuit.css' %}">
+  <script>
+  (function(){
+    if(localStorage.getItem('darkMode')==='1') document.documentElement.classList.add('dm-preload');
+  })();
+  </script>
+</head>
+<body>
+<div class="circuit-page">
+
+  <!-- Toolbar -->
+  <div class="circuit-toolbar">
+    {% if work %}
+    <a href="{% url 'work_detail' work.id %}" class="ct-btn" title="Назад к заданию" style="padding:.35rem .55rem">
+      <i class="fas fa-arrow-left"></i>
+    </a>
+    {% endif %}
+    <div class="circuit-toolbar-title">
+      <i class="fas fa-microchip" style="color:#667eea;margin-right:.3rem"></i>
+      {% if work %}{{ work.title }}{% else %}Конструктор схем{% endif %}
+    </div>
+
+    {% if not readonly %}
+    <button class="ct-btn" onclick="EDITOR.undo()" title="Отменить (Ctrl+Z)"><i class="fas fa-undo"></i></button>
+    <button class="ct-btn" onclick="EDITOR.redo()" title="Повторить (Ctrl+Y)"><i class="fas fa-redo"></i></button>
+    <div class="ct-sep"></div>
+    <button class="ct-btn" onclick="EDITOR.fitView()" title="Вписать в экран"><i class="fas fa-compress-arrows-alt"></i></button>
+    <button class="ct-btn danger" onclick="confirmClear()" title="Очистить схему"><i class="fas fa-trash-alt"></i> Очистить</button>
+    <div class="ct-sep"></div>
+    <button class="ct-btn primary" onclick="EDITOR.save()" title="Сохранить черновик (Ctrl+S)">
+      <i class="fas fa-save"></i> Сохранить
+    </button>
+    <span class="save-msg" id="save-msg"></span>
+
+    {% if work %}
+    <div class="ct-sep"></div>
+    <button class="ct-btn success" onclick="confirmSubmit()">
+      <i class="fas fa-paper-plane"></i> Сдать работу
+    </button>
+    {% endif %}
+    {% else %}
+    <span class="readonly-badge"><i class="fas fa-lock"></i> Только просмотр</span>
+    {% endif %}
+
+    <button class="ct-btn" onclick="toggleDark()" id="darkToggle" title="Тёмная тема" style="margin-left:auto">
+      <i class="fas fa-moon" id="darkIcon"></i>
+    </button>
+  </div>
+
+  <!-- Workspace -->
+  <div class="circuit-workspace">
+
+    <!-- Palette -->
+    {% if not readonly %}
+    <div class="circuit-palette" id="circuit-palette">
+      <div id="palette-container"></div>
+    </div>
+    {% endif %}
+
+    <!-- Canvas -->
+    <div class="circuit-canvas-wrap">
+      <svg id="circuit-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+
+      <!-- Hint -->
+      {% if not readonly %}
+      <div class="circuit-hint">
+        <b>Управление:</b><br>
+        ЛКМ — выбрать / переместить<br>
+        Клик на <b>пин</b> (●) — провод<br>
+        <kbd>Del</kbd> — удалить выбранное<br>
+        <kbd>Esc</kbd> — отменить действие<br>
+        <kbd>Ctrl+Z</kbd> — отменить<br>
+        Колесо мыши — масштаб
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Properties -->
+    {% if not readonly %}
+    <div class="circuit-props">
+      <h4>Свойства</h4>
+      <div id="props-panel">
+        <p class="props-hint">Выбери компонент чтобы изменить свойства</p>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- Status bar -->
+  <div class="circuit-statusbar">
+    <span id="circuit-status"></span>
+    <span style="margin-left:auto">
+      {% if work %}Работа №{{ work.order }}: {{ work.title }}{% endif %}
+      {% if readonly %} · <span style="color:#f59e0b">Просмотр решения</span>{% endif %}
+    </span>
+  </div>
+
+</div>
+
+<!-- Submit form -->
+{% if work and not readonly %}
+<form id="circuit-submit-form" method="post" action="{% url 'circuit_submit' work.id %}" style="display:none">
+  {% csrf_token %}
+  <input type="hidden" name="circuit_json" id="circuit-json-hidden" value="">
+  <input type="hidden" name="comment" value="">
+</form>
+{% endif %}
+
+<script src="{% static 'works/js/circuit.js' %}"></script>
+<script>
+// Тёмная тема
+(function(){
+  var dm = localStorage.getItem('darkMode')==='1';
+  if(dm){ document.body.classList.add('dark-mode'); document.getElementById('darkIcon').className='fas fa-sun'; }
+})();
+function toggleDark(){
+  var d = document.body.classList.toggle('dark-mode');
+  localStorage.setItem('darkMode', d?'1':'0');
+  document.getElementById('darkIcon').className = d?'fas fa-sun':'fas fa-moon';
+}
+
+function confirmClear(){
+  if(confirm('Очистить всю схему? Действие можно отменить через Ctrl+Z.')) EDITOR.clear();
+}
+function confirmSubmit(){
+  if(confirm('Сдать схему на проверку преподавателю?')) EDITOR.submit();
+}
+
+// Запуск редактора
+document.addEventListener('DOMContentLoaded', function(){
+  initCircuitEditor({
+    initialJson: {{ initial_json|safe }},
+    saveUrl:     '{% if work %}{% url "circuit_save" work.id %}{% else %}/circuit/save/0/{% endif %}',
+    csrf:        '{{ csrf_token }}',
+    readonly:    {% if readonly %}true{% else %}false{% endif %},
+  });
+});
+</script>
+</body>
+</html>

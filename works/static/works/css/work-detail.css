@@ -772,3 +772,54 @@
         padding: 1rem;
     }
 }
+
+/* ── Circuit launcher ───────────────────────────────────────────────────── */
+.circuit-launch-block {
+    margin-top: 1.5rem;
+    border: 1.5px dashed #c7d2fe;
+    border-radius: 10px;
+    background: #f0f4ff;
+    padding: 1rem 1.25rem;
+}
+.circuit-launch-inner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+body.dark-mode .circuit-launch-block { background: #1e1b4b; border-color: #3730a3; }
+body.dark-mode .circuit-launch-inner div { color: #e2e8f0 !important; }
+
+/* ── Tinkercad embed ─────────────────────────────────────────────────────── */
+.tinkercad-block {
+    margin-top: 1.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.tinkercad-header {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .65rem 1rem;
+    background: #f0fdf4;
+    border-bottom: 1px solid #d1fae5;
+    font-weight: 500;
+    font-size: .9rem;
+    color: #065f46;
+}
+.tinkercad-open-btn {
+    margin-left: auto;
+    font-size: .8rem;
+    color: #059669;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+}
+.tinkercad-open-btn:hover { text-decoration: underline; }
+.tinkercad-iframe-wrap { line-height: 0; }
+.tinkercad-iframe-wrap iframe { display: block; }
+body.dark-mode .tinkercad-block { border-color: #334155; }
+body.dark-mode .tinkercad-header { background: #022c22; border-color: #064e3b; color: #6ee7b7; }
+body.dark-mode .tinkercad-open-btn { color: #34d399; }

@@ -5,6 +5,56 @@ from django.db.models import Sum
 import uuid
 import os
 
+# ══════════════════════════════════════════════════════════════════════════════
+# ПРЕДМЕТЫ
+# ══════════════════════════════════════════════════════════════════════════════
+
+class Subject(models.Model):
+    slug        = models.SlugField(unique=True, max_length=20, verbose_name='Slug')
+    title       = models.CharField(max_length=100, verbose_name='Название')
+    icon        = models.CharField(max_length=50, default='fas fa-book', verbose_name='Иконка')
+    color       = models.CharField(max_length=20, default='#667eea', verbose_name='Цвет')
+    description = models.TextField(blank=True, verbose_name='Описание')
+    order       = models.PositiveSmallIntegerField(default=0, verbose_name='Порядок')
+    is_active   = models.BooleanField(default=True, verbose_name='Активен')
+
+    class Meta:
+        ordering = ['order']
+        verbose_name = 'Предмет'
+        verbose_name_plural = 'Предметы'
+
+    def __str__(self):
+        return self.title
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ОБЪЯВЛЕНИЯ
+# ══════════════════════════════════════════════════════════════════════════════
+
+class Announcement(models.Model):
+    author     = models.ForeignKey(User, on_delete=models.CASCADE,
+                                   related_name='announcements', verbose_name='Автор')
+    subject    = models.ForeignKey('Subject', null=True, blank=True, on_delete=models.SET_NULL,
+                                   verbose_name='Предмет (пусто = все)')
+    title      = models.CharField(max_length=200, verbose_name='Заголовок')
+    body       = models.TextField(blank=True, verbose_name='Текст')
+    is_active  = models.BooleanField(default=True, verbose_name='Активно')
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True, verbose_name='Скрыть с даты')
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Объявление'
+        verbose_name_plural = 'Объявления'
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def is_expired(self):
+        return bool(self.expires_at and timezone.now() > self.expires_at)
+
+
 class PracticalWork(models.Model):
     TOPIC_CHOICES = [
         ('search', 'Алгоритмы поиска'),
@@ -37,7 +87,10 @@ class PracticalWork(models.Model):
     is_active = models.BooleanField(default=True, verbose_name="Доступна для сдачи")
     order = models.IntegerField(default=0, verbose_name="Порядковый номер")
     difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES, default='medium', verbose_name="Сложность")
-    deadline = models.DateTimeField(null=True, blank=True, verbose_name="Срок сдачи")
+    deadline      = models.DateTimeField(null=True, blank=True, verbose_name="Срок сдачи")
+    subject       = models.ForeignKey('Subject', null=True, blank=True, on_delete=models.SET_NULL,
+                                      related_name='works', verbose_name='Предмет')
+    tinkercad_url = models.URLField(blank=True, verbose_name='Ссылка Tinkercad (для МК)')
     max_score = models.IntegerField(default=10, verbose_name="Максимальный балл")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -216,6 +269,8 @@ class TheoryModule(models.Model):
     order       = models.PositiveIntegerField(default=0, verbose_name='Порядок')
     is_active          = models.BooleanField(default=True)
     requires_quiz_pass = models.BooleanField(default=False, verbose_name='Требует сдачи предыдущего теста')
+    subject     = models.ForeignKey('Subject', null=True, blank=True, on_delete=models.SET_NULL,
+                                    related_name='modules', verbose_name='Предмет')
 
     class Meta:
         verbose_name = 'Раздел теории'
@@ -249,12 +304,64 @@ class TheoryLesson(models.Model):
         return f'{self.module.title} → {self.title}'
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# КОНСТРУКТОР СХЕМ
+# ══════════════════════════════════════════════════════════════════════════════
+
+class CircuitDraft(models.Model):
+    """Черновик схемы — сохраняется автоматически при работе студента."""
+    student    = models.ForeignKey(User, on_delete=models.CASCADE, related_name='circuit_drafts')
+    work       = models.ForeignKey('PracticalWork', on_delete=models.CASCADE,
+                                   related_name='circuit_drafts')
+    circuit_json = models.TextField(default='{}', verbose_name='JSON схемы')
+    updated_at   = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('student', 'work')
+        verbose_name = 'Черновик схемы'
+        verbose_name_plural = 'Черновики схем'
+
+    def __str__(self):
+        return f'{self.student} / {self.work}'
+
+
+class CircuitSolution(models.Model):
+    """Сданная схема как решение практической работы."""
+    STATUS_CHOICES = [
+        ('submitted',  'Сдано'),
+        ('reviewed',   'Проверено'),
+        ('correct',    'Зачтено'),
+        ('incorrect',  'Не зачтено'),
+    ]
+    student      = models.ForeignKey(User, on_delete=models.CASCADE,
+                                     related_name='circuit_solutions')
+    work         = models.ForeignKey('PracticalWork', on_delete=models.CASCADE,
+                                     related_name='circuit_solutions')
+    circuit_json = models.TextField(verbose_name='JSON схемы')
+    status       = models.CharField(max_length=20, choices=STATUS_CHOICES, default='submitted')
+    score        = models.IntegerField(default=0, verbose_name='Балл')
+    comment      = models.TextField(blank=True, verbose_name='Комментарий студента')
+    teacher_comment = models.TextField(blank=True, verbose_name='Комментарий преподавателя')
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at  = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-submitted_at']
+        verbose_name = 'Решение схемы'
+        verbose_name_plural = 'Решения схем'
+
+    def __str__(self):
+        return f'{self.student} / {self.work} — {self.get_status_display()}'
+
+
 class LessonProgress(models.Model):
-    """Отметка о прочитанном уроке"""
+    """Отметка о прочитанном уроке + конспект"""
     user       = models.ForeignKey(User, on_delete=models.CASCADE)
     lesson     = models.ForeignKey(TheoryLesson, on_delete=models.CASCADE)
     completed  = models.BooleanField(default=False)
+    notes      = models.TextField(blank=True, verbose_name='Конспект')
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ('user', 'lesson')

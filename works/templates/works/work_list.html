@@ -4,6 +4,12 @@
 <div class="page">
   <div class="page-header">
     <div>
+      {% if current_subject %}
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem;font-size:.82rem;color:{{ current_subject.color }}">
+        <i class="{{ current_subject.icon }}"></i>
+        <span>{{ current_subject.title }}</span>
+      </div>
+      {% endif %}
       <h1><i class="fas fa-code"></i> Практические работы</h1>
       <p class="page-subtitle">Закрепляй знания — пиши код, сдавай задачи</p>
     </div>
@@ -53,4 +59,31 @@
     {% endfor %}
   </div>
 </div>
+
+<style>
+.deadline-chip { transition: color .2s; }
+.deadline-chip.deadline-overdue { color: #ef4444 !important; }
+.deadline-chip.deadline-soon    { color: #f59e0b !important; }
+</style>
+<script>
+(function(){
+  document.querySelectorAll('[data-deadline]').forEach(function(chip) {
+    var dl = new Date(chip.dataset.deadline);
+    if (isNaN(dl)) return;
+    var now  = new Date();
+    var diff = dl - now;
+    var label = chip.querySelector('.deadline-label');
+    if (!label) return;
+    if (diff < 0) {
+      label.textContent = 'Просрочено';
+      chip.classList.add('deadline-overdue');
+    } else if (diff < 86400000 * 3) {
+      var h = Math.floor(diff / 3600000);
+      var d = Math.floor(diff / 86400000);
+      label.textContent = d > 0 ? ('Через ' + d + ' д.') : ('Через ' + h + ' ч.');
+      chip.classList.add('deadline-soon');
+    }
+  });
+})();
+</script>
 {% endblock %}

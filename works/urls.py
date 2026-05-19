@@ -31,6 +31,24 @@ urlpatterns = [
     path('theory/', views.theory_list, name='theory_list'),
     path('theory/lesson/<int:lesson_id>/', views.theory_lesson, name='theory_lesson'),
     path('theory/lesson/<int:lesson_id>/done/', views.mark_lesson_done, name='mark_lesson_done'),
+    path('theory/lesson/<int:lesson_id>/notes/', views.save_notes, name='save_notes'),
+
+    # ── Предметы ──────────────────────────────────────────────────────────────
+    path('subject/<slug:slug>/', views.switch_subject, name='switch_subject'),
+
+    # ── Конструктор схем ───────────────────────────────────────────────────────
+    path('circuit/editor/',                  views.circuit_editor_free,       name='circuit_editor_free'),
+    path('circuit/editor/<int:work_id>/',    views.circuit_editor,            name='circuit_editor'),
+    path('circuit/save/<int:work_id>/',      views.circuit_save,              name='circuit_save'),
+    path('circuit/submit/<int:work_id>/',    views.circuit_submit,            name='circuit_submit'),
+    path('circuit/solution/<int:sol_id>/',   views.circuit_solution_detail,   name='circuit_solution_detail'),
+    path('circuit/review/<int:sol_id>/',     views.circuit_review,            name='circuit_review'),
+    path('circuit/solutions/',               views.circuit_solutions_list,    name='circuit_solutions_list'),
+
+    # ── Объявления ────────────────────────────────────────────────────────────
+    path('announcements/', views.announcement_list, name='announcement_list'),
+    path('announcements/create/', views.create_announcement, name='create_announcement'),
+    path('announcements/<int:pk>/deactivate/', views.deactivate_announcement, name='deactivate_announcement'),
 
     # ── Тесты ─────────────────────────────────────────────────────────────────
     path('quiz/', views.quiz_list, name='quiz_list'),

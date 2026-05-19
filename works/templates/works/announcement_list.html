@@ -1,0 +1,74 @@
+{% extends 'works/base.html' %}
+{% block title %}Объявления — управление{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header" style="flex-wrap:wrap;gap:.75rem">
+    <div>
+      <h1><i class="fas fa-bullhorn" style="color:#667eea;margin-right:.5rem"></i>Объявления</h1>
+      <p class="page-subtitle">Управление объявлениями для студентов</p>
+    </div>
+    <a href="{% url 'create_announcement' %}" class="btn btn-primary"><i class="fas fa-plus"></i> Новое</a>
+  </div>
+
+  <!-- Фильтры -->
+  <form method="get" style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.25rem">
+    <select name="subject" class="form-input" style="width:auto">
+      <option value="">Все предметы</option>
+      {% for s in subjects %}
+      <option value="{{ s.slug }}" {% if subject_filter == s.slug %}selected{% endif %}>{{ s.title }}</option>
+      {% endfor %}
+    </select>
+    <select name="active" class="form-input" style="width:auto">
+      <option value="">Все статусы</option>
+      <option value="1" {% if active_filter == '1' %}selected{% endif %}>Активные</option>
+      <option value="0" {% if active_filter == '0' %}selected{% endif %}>Скрытые</option>
+    </select>
+    <button type="submit" class="btn btn-primary" style="padding:.45rem .9rem"><i class="fas fa-filter"></i> Применить</button>
+  </form>
+
+  {% if announcements %}
+  <div style="display:flex;flex-direction:column;gap:.6rem">
+    {% for ann in announcements %}
+    <div style="background:#fff;border:1px solid #e5e7eb;border-left:4px solid {% if ann.is_active and not ann.expired %}#10b981{% else %}#9ca3af{% endif %};border-radius:8px;padding:.85rem 1rem;display:flex;align-items:flex-start;gap:.85rem" id="annrow-{{ ann.id }}">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;margin-bottom:.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+          {{ ann.title }}
+          {% if ann.subject %}<span style="font-size:.72rem;padding:.1rem .5rem;border-radius:20px;background:{{ ann.subject.color }}20;color:{{ ann.subject.color }}">{{ ann.subject.title }}</span>{% endif %}
+          {% if not ann.is_active %}<span style="font-size:.72rem;padding:.1rem .5rem;border-radius:20px;background:#f3f4f6;color:#9ca3af">Скрыто</span>{% endif %}
+          {% if ann.expired %}<span style="font-size:.72rem;padding:.1rem .5rem;border-radius:20px;background:#fef2f2;color:#ef4444">Истекло</span>{% endif %}
+        </div>
+        {% if ann.body %}<div style="font-size:.88rem;color:#4b5563;margin-bottom:.25rem">{{ ann.body|truncatechars:120 }}</div>{% endif %}
+        <div style="font-size:.75rem;color:#9ca3af">{{ ann.author.last_name }} · {{ ann.created_at|date:"d.m.Y H:i" }}{% if ann.expires_at %} · до {{ ann.expires_at|date:"d.m.Y H:i" }}{% endif %}</div>
+      </div>
+      {% if ann.is_active %}
+      <button onclick="hideAnn({{ ann.id }})" class="btn" style="padding:.35rem .7rem;font-size:.8rem;background:#fef2f2;color:#ef4444;border:none;flex-shrink:0" title="Скрыть">
+        <i class="fas fa-eye-slash"></i>
+      </button>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:3rem;color:#9ca3af">
+    <i class="fas fa-bullhorn" style="font-size:2.5rem;margin-bottom:1rem;display:block;opacity:.3"></i>
+    <p>Нет объявлений</p>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+body.dark-mode [style*="background:#fff"] { background:#1e293b !important; }
+body.dark-mode [style*="border:1px solid #e5e7eb"] { border-color:#334155 !important; }
+body.dark-mode [style*="color:#4b5563"] { color:#94a3b8 !important; }
+</style>
+<script>
+function hideAnn(id) {
+  fetch(`/announcements/${id}/deactivate/`, {
+    method: 'POST',
+    headers: {'X-CSRFToken': '{{ csrf_token }}'}
+  }).then(r => r.json()).then(d => {
+    if (d.status === 'ok') location.reload();
+  });
+}
+</script>
+{% endblock %}

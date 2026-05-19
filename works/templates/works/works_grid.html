@@ -26,9 +26,15 @@
               <span>{{ work.max_score }} баллов</span>
             </div>
             {% if work.deadline %}
-            <div class="info-item">
-              <i class="fas fa-calendar"></i>
-              <span>{{ work.deadline|date:"d.m.Y" }}</span>
+            <div class="info-item deadline-chip {% if work.is_overdue %}deadline-overdue{% endif %}" data-deadline="{{ work.deadline|date:'c' }}">
+              <i class="fas fa-clock"></i>
+              <span class="deadline-label">{{ work.deadline|date:"d.m.Y" }}</span>
+            </div>
+            {% endif %}
+            {% if work.subject %}
+            <div class="info-item" style="font-size:.75rem;opacity:.7">
+              <i class="{{ work.subject.icon }}"></i>
+              <span>{{ work.subject.title|truncatechars:18 }}</span>
             </div>
             {% endif %}
           </div>
